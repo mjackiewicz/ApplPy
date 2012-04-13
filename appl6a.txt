@@ -1,3 +1,4 @@
+# Original Maple Version of APPL
 #######################################################################
 # APPL Software (c) 2001,2002,2008, 2010  Andrew Glen, Larry Leemis, Diane Evans
 # Version 6, dated 5 Jan 2012
