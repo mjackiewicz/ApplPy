@@ -1,15 +1,15 @@
-#############################################################
-# ApplPy Software 2012 Matthew Robinson, Matthew Jackiewicz #
-# Version 0.5, last updated 01 April 2012                   #
-#############################################################
+######################################################################
+# ApplPy Software 2012 Matthew Robinson, Matthew Jackiewicz          #
+# Version 0.5, last updated 01 April 2012                            #
+######################################################################
 
-#############################################################
+######################################################################
 # Outstanding Issues:
 #   1. Sympy has trouble integrating the normal distribution
 #       -- appears to be fixed in the github release of sympy
 #   2. Sympy cannot integrate Abs(x) (required to complete
 #       self.verifyPDF()
-#############################################################
+######################################################################
 
 """
 Main Random Variable Module
@@ -50,36 +50,41 @@ class RV:
         Checks the random variable for errors
         """
 
-        # Check for errors in the data structure of the random variable
+        # Check for errors in the data structure of the random
+        #   variable
 
-        # Check to make sure that the given function is in the form of a list
+        # Check to make sure that the given function is in the
+        #   form of a list
         # If it is not in the form of a list, place it in a list
         if isinstance(func,list)!=True:
             func1=func
             func=[func1]
-        # Check to make sure that the given support is in the form of a list
+        # Check to make sure that the given support is in the form of
+        #   a list
         if isinstance(support,list)!=True:
             raise RVError('Support must be a list')
-        # Check to make sure that the support list has the correct length
-        # The support list should be one element larger than the function list
-        #   for continuous distributions, and the same size for discrete
+        # Check to make sure that the support list has the correct
+        #   length
+        # The support list should be one element larger than the
+        #   function list for continuous distributions, and the same
+        #   size for discrete
         if ftype[0]=='continuous':
             if len(support)-len(func)!=1:
                 raise RVError('Support has incorrect number of elements')
         if ftype[0]=='discrete':
             if len(support)-len(func)!=0:
                 raise RVError('Support has incorrect number of elements')
-        # Check to make sure that the elements of the support list are in
-        #   ascending order
+        # Check to make sure that the elements of the support list are
+        #   in ascending order
         for i in range(len(support)-1):
             if support[i]>support[i+1]:
                 raise RVError('Support is not in ascending order')
-        # Check to make sure that the random variable is either discrete or
-        #   continuous
+        # Check to make sure that the random variable is either
+        #   discrete or continuous
         if ftype[0] not in ['continuous','discrete']:
             raise RVError('Random variable must either be discrete or continuous')
 
-        # Initiate the random variable
+        # Initialize the random variable
         self.func=func
         self.support=support
         self.ftype=ftype
@@ -150,7 +155,8 @@ class RV:
             print 'Now checking for area...'
             area=0
             for i in range(len(X_dummy.func)):
-                val=integrate(X_dummy.func[i],(x,X_dummy.support[i],X_dummy.support[i+1]))
+                val=integrate(X_dummy.func[i],(x,X_dummy.support[i],
+                                               X_dummy.support[i+1]))
                 area+=val
             print 'The area under f(x) is: %s'%(area)
             
@@ -224,7 +230,7 @@ class RV:
 
 
 """
-Methods for converting random variables
+Procedures for converting functional form
 
 Procedures:
     1. CDF(RVar,value)
@@ -547,6 +553,8 @@ def IDF(RVar,value=x):
     # If the distribution is continuous, find and return the idf of the random variable
     if RVar.ftype[0]=='continuous':
         if value==x:
+            if RVar.ftype[1]=='idf':
+                return self
             # Convert the random variable to its CDF form
             X_dummy=CDF(RVar)
             # Create values used to check for correct inverse
@@ -589,8 +597,13 @@ def IDF(RVar,value=x):
             
         # If a value is specified, use the newton-raphson method to generate a random variate
         if value!=x:
-            varlist=RVar.variate(s=value)
-            return varlist[0]
+            X_dummy=IDF(RVar)
+            for i in range(len(X_dummy.support)):
+                if value>=X_dummy.support[i] and value<=X_dummy.support[i+1]:
+                    idfvalue=X_dummy.func[i].subs(t,value)
+                    return simplify(idfvalue)
+            #varlist=RVar.variate(s=value)
+            #return varlist[0]
 
 
     # If the distribution is discrete, find and return the idf of the random variable
@@ -845,10 +858,13 @@ def BootstrapRV(varlist):
 
 
 """
-Methods for finding expected values
+Procedures on One Random Variable
 
 Procedures:
     1. Mean(RVar)
+    2. Transform(RVar,gX)
+    3. Truncate(RVar,[lw,up])
+    4. Variance(RVar)
 """
 
 def Mean(RVar):
@@ -884,6 +900,199 @@ def Mean(RVar):
         for i in range(len(meanlist)):
             meanval+=meanlist[i]
         return meanval
+
+                
+def Transform(RVar,gXt):
+    """
+    Procedure Name: Transform
+    Purpose: Compute the transformation of a random variable
+                by a a function g(x)
+    Arguments:  1. RVar: A random variable
+                2. gX: A transformation in list of two lists format
+    Output:     1. The transformation of RVar       
+    """
+    
+    # Check to make sure support of transform is in ascending order
+    for i in range(len(gXt[1])-1):
+        if gXt[1][i]>gXt[1][i+1]:
+            raise RVError('Transform support is not in ascending order')
+
+    # Convert the RV to its PDF form
+    X_dummy=PDF(RVar)
+            
+    # If the distribution is continuous, find and return the transformation
+    if RVar.ftype[0]=='continuous':
+        # Adjust the transformation to include the support of the random
+        #   variable
+        gXold=[]
+        for i in range(len(gXt)):
+            gXold.append(gXt[i])
+        gXsupp=[]
+        for i in range(len(gXold[1])):
+            gXsupp.append(gXold[1][i])
+        # Add the support of the random variable into the support
+        #   of the transformation
+        for i in range(len(X_dummy.support)):
+            if X_dummy.support[i] not in gXsupp:
+                gXsupp.append(X_dummy.support[i])
+        gXsupp.sort()
+        # Find which segment of the transformation applies, and add it
+        #   to the transformation list
+        gXfunc=[]
+        for i in range(len(gXsupp)-1):
+            for j in range(len(gXold[0])):
+                if gXsupp[i]>=gXold[1][j]:
+                    if gXsupp[i]<=gXold[1][j+1]:
+                        gXfunc.append(gXold[0][j])
+                        break
+        # Set the adjusted transformation as gX
+        gX=[]
+        gX.append(gXfunc)
+        gX.append(gXsupp)
+        # If the support of the transformation does not match up with the
+        #   support of the RV, adjust the support of the transformation
+        
+        # Traverse list to find elements that are not within the support
+        #   of the rv
+        for i in range(len(gX[1])):
+            if gX[1][i]<X_dummy.support[0]:
+                gX[1][i]=X_dummy.support[0]
+            if gX[1][i]>X_dummy.support[len(X_dummy.support)-1]:
+                gX[1][i]=X_dummy.support[len(X_dummy.support)-1]
+        # Delete segments of the transformation that will not be used
+        for i in range(len(gX[0])-1):
+            if gX[1][i]==gX[1][i+1]:
+                gX[0].remove(gX[0][i])
+                gX[1].remove(gX[1][i+1])
+        # Create a list of mappings x->g(x)
+        mapping=[]
+        for i in range(len(gX[0])):
+            mapping.append([gX[0][i].subs(x,gX[1][i]),
+                            gX[0][i].subs(x,gX[1][i+1])])
+        # Create the support for the transformed random variable
+        trans_supp=[]
+        for i in range(len(mapping)):
+            for j in range(2):
+                if mapping[i][j] not in trans_supp:
+                    trans_supp.append(mapping[i][j])
+        trans_supp.sort()
+        # Find which segment of the transformation each transformation
+        #   function applies to
+        applist=[]
+        for i in range(len(mapping)):
+            temp=[]
+            for j in range(len(trans_supp)-1):
+                if min(mapping[i])<=trans_supp[j]:
+                    if max(mapping[i])>=trans_supp[j+1]:
+                        temp.append(j)
+            applist.append(temp)
+        # Find the appropriate inverse for each g(x)
+        ginv=[]
+        for i in range(len(gX[0])):
+            # Find the 'test point' for the inverse
+            if [gX[1][i],gX[1][i+1]]==[-oo,oo]:
+                c=0
+            elif gX[1][i]==-oo and gX[1][i+1]!=oo:
+                c=gX[1][i+1]-1
+            elif gX[1][i]!=-oo and gX[1][i+1]==oo:
+                c=gX[1][i]+1
+            else:
+                c=(gX[1][i]+gX[1][i+1])/2
+            # Create a list of possible inverses
+            invlist=solve(gX[0][i]-t,x)
+            # Use the test point to determine the correct inverse
+            for j in range(len(invlist)):
+                # If g-1(g(c))=c, then the inverse is correct
+                if invlist[j].subs(t,gX[0][i].subs(x,c))==c:
+                    ginv.append(invlist[j])
+        # Find the transformation function for each segment
+        seg_func=[]
+        for i in range(len(X_dummy.func)):
+            # Only find transformation for applicable segments
+            for j in range(len(gX[0])):
+                if gX[1][j]>=X_dummy.support[i]:
+                    if gX[1][j+1]<=X_dummy.support[i+1]:
+                        if type(X_dummy.func[i]) not in [float,int]:
+                            tran=X_dummy.func[i].subs(x,ginv[j])*diff(ginv[j],t)
+                        else:
+                            tran=X_dummy.func[i]*diff(ginv[j],t)
+                        seg_func.append(tran)
+        # Sum the transformations for each piece of the transformed
+        #   random variable
+        trans_func=[]
+        for i in range(len(trans_supp)-1):
+            h=0
+            for j in range(len(seg_func)):
+                if i in applist[j]:
+                    if mapping[j][0]<mapping[j][1]:
+                        h=h+seg_func[j]
+                    else:
+                        h=h-seg_func[j]
+            trans_func.append(h)
+        # Substitute x into the transformed random variable
+        trans_func2=[]
+        for i in range(len(trans_func)):
+            trans_func2.append(trans_func[i].subs(t,x))
+        # Create and return the random variable
+        return RV(trans_func2,trans_supp,['continuous','pdf'])
+
+    # If the distribution is discrete, find and return the transformation
+    if RVar.ftype[0]=='discrete':
+        trans_sup=[]
+        # Find the portion of the transformation each element
+        #   in the random variable applies to, and then transform it
+        for i in range(len(X_dummy.support)):
+            for j in range(len(gX[1])-1):
+                if X_dummy.support[i]>=gX[1][j]:
+                    if X_dummy.support[i]<=gX[1][j+1]:
+                        trans_sup.append(gX[0][j].subs(x,X_dummy.support[i]))
+        # Sort the function and support lists for the convolution
+        sortlist=zip(trans_sup,X_dummy.func)
+        sortlist.sort()
+        translist=[]
+        funclist=[]
+        for i in range(len(sortlist)):
+            translist.append(sortlist[i][0])
+            funclist.append(sortlist[i][1])
+        # Combine redundant elements in the list
+        translist2=[]
+        funclist2=[]
+        for i in range(len(translist)):
+            if translist[i] not in translist2:
+                translist2.append(translist[i])
+                funclist2.append(funclist[i])
+            elif translist[i] in translist2:
+                idx=translist2.index(translist[i])
+                funclist2[idx]+=funclist[i]
+        # Return the transformed random variable
+        return RV(funclist2,translist2,['discrete','pdf'])
+
+def Truncate(RVar,supp):
+    """
+    Procedure Name: Truncate
+    Purpose: Truncate a random variable
+    Arguments: 1. RVar: A random variable
+               2. supp: The support of the truncated random variable
+    Output:    1. A truncated random variable
+    """
+    # Check to make sure the support of the truncated random
+    #   variable is given in ascending order
+    if supp[0]>supp[1]:
+        raise RVError('The support must be given in ascending order')
+    
+    # Conver the random variable to its pdf form
+    X_dummy=PDF(RVar)
+    cdf_dummy=CDF(RVar)
+
+    # If the random variable is continuous, find and return
+    #   the truncated random variable
+    if RVar.ftype[0]=='continuous':
+        # Find the area of the truncated random variable
+        area=CDF(cdf_dummy,supp[1])-CDF(cdf_dummy,supp[0])
+        # Cut out parts of the distribution that don't fall
+        #   within the new limits
+        
+    
 
 def Variance(RVar):
     """
@@ -930,12 +1139,82 @@ def Variance(RVar):
         return var
 
 """
-Methods for plotting random variables
+Procedures on Two Random Variables
 
 Procedures:
-    1. mat_plot(RVar,suplist)
-    2. pyg_plot(RVar,suplist)
-    3. PlotDist(RVar,suplist)
+    1. Convolution(RVar1,RVar2)
+"""
+                    
+def Convolution(RVar1,RVar2):
+    """
+    Procedure Name: Convolution
+    Purpose: Compute the convolution of two independent
+                random variables
+    Arguments:  1. RVar1: A random variable
+                2. RVar2: A random variable
+    Output:     1. The convolution of RVar1 and RVar2        
+    """
+    # If the two random variables are not both continuous or
+    #   both discrete, return an error
+    if RVar1.ftype[0]!=RVar2.ftype[0]:
+        raise RVError('Both random variables must have the same type')
+
+    # Convert both random variables to their PDF form
+    X1_dummy=PDF(RVar1)
+    X2_dummy=PDF(RVar2)
+
+    # If the distributions are continuous, find and return the convolution
+    #   of the two random variables
+    if RVar1.ftype[0]=='continuous':
+        # If the two distributions are both lifetime distributions, treat
+        #   as a special case
+        if RVar1.support==[0,oo] and RVar2.support==[0,oo] and len(RVar1.func)==1 and len(RVar2.func)==1:
+            func1=X1_dummy.func[0]
+            func2=X2_dummy.func[0].subs(x,z-x)
+            conv=integrate(func1*func2,(x,0,z))
+            return RV([conv.subs(z,x)],[0,oo],['continuous','pdf'])
+
+    # If the distributions are discrete, find and return the convolution
+    #   of the two random variables.
+    if RVar1.ftype[0]=='discrete':
+        # Convert each random variable to its pdf form
+        X1_dummy=PDF(RVar1)
+        X2_dummy=PDF(RVar2)
+        # Create function and support lists for the convolution of the
+        #   two random variables
+        convlist=[]
+        funclist=[]
+        for i in range(len(X1_dummy.support)):
+            for j in range(len(X2_dummy.support)):
+                convlist.append(X1_dummy.support[i]+X2_dummy.support[j])
+                funclist.append(X1_dummy.func[i]*X2_dummy.func[j])
+        # Sort the function and support lists for the convolution
+        sortlist=zip(convlist,funclist)
+        sortlist.sort()
+        convlist2=[]
+        funclist2=[]
+        for i in range(len(sortlist)):
+            convlist2.append(sortlist[i][0])
+            funclist2.append(sortlist[i][1])
+        # Remove redundant elements in the support list
+        convlist3=[]
+        funclist3=[]
+        for i in range(len(convlist2)):
+            if convlist2[i] not in convlist3:
+                convlist3.append(convlist2[i])
+                funclist3.append(funclist2[i])
+            else:
+                funclist3[convlist3.index(convlist2[i])]+=funclist2[i]
+        # Create and return the new random variable
+        return RV(funclist3,convlist3,['discrete','pdf'])
+
+
+"""
+Utilities
+
+Procedures:
+    1. PlotDist(RVar,suplist)
+    2. PlotDisplay(RVar,suplist)
 """
 
 def mat_plot(RVar,suplist=None):
@@ -1068,12 +1347,8 @@ def PlotDist(RVar,suplist=None):
     if oo in suplist or -oo in suplist:
         raise RVError('Plot support list cannot contain oo or -oo')
     # Try to plot using matplotlib
-    # if it doesn't work, use pyglet
-    try:
-        mat_plot(RVar,suplist)
-        plt.show()
-    except:
-       pyg_plot(RVar,suplist)
+    mat_plot(RVar,suplist)
+    plt.show()
 
 def PlotDisplay(plot_list,suplist=None):
     """
@@ -1096,177 +1371,12 @@ def PlotDisplay(plot_list,suplist=None):
     # Display the plots
     plt.show()
 
-"""
-Random Variable Algebra Procedures
 
-Procedures:
-    1. Convolution(RVar1,RVar2)
-"""
-                    
-def Convolution(RVar1,RVar2):
-    """
-    Procedure Name: Convolution
-    Purpose: Compute the convolution of two independent
-                random variables
-    Arguments:  1. RVar1: A random variable
-                2. RVar2: A random variable
-    Output:     1. The convolution of RVar1 and RVar2        
-    """
-    # If the two random variables are not both continuous or
-    #   both discrete, return an error
-    if RVar1.ftype[0]!=RVar2.ftype[0]:
-        raise RVError('Both random variables must have the same type')
-
-    # Convert both random variables to their PDF form
-    X1_dummy=PDF(RVar1)
-    X2_dummy=PDF(RVar2)
-
-    # If the distributions are continuous, find and return the convolution
-    #   of the two random variables
-    if RVar1.ftype[0]=='continuous':
-        # If the two distributions are both lifetime distributions, treat
-        #   as a special case
-        if RVar1.support==[0,oo] and RVar2.support==[0,oo] and len(RVar1.func)==1 and len(RVar2.func)==1:
-            func1=X1_dummy.func[0]
-            func2=X2_dummy.func[0].subs(x,z-x)
-            conv=integrate(func1*func2,(x,0,z))
-            return RV([conv.subs(z,x)],[0,oo],['continuous','pdf'])
-
-    # If the distributions are discrete, find and return the convolution
-    #   of the two random variables.
-    if RVar1.ftype[0]=='discrete':
-        # Convert each random variable to its pdf form
-        X1_dummy=PDF(RVar1)
-        X2_dummy=PDF(RVar2)
-        # Create function and support lists for the convolution of the
-        #   two random variables
-        convlist=[]
-        funclist=[]
-        for i in range(len(X1_dummy.support)):
-            for j in range(len(X2_dummy.support)):
-                convlist.append(X1_dummy.support[i]+X2_dummy.support[j])
-                funclist.append(X1_dummy.func[i]*X2_dummy.func[j])
-        # Sort the function and support lists for the convolution
-        sortlist=zip(convlist,funclist)
-        sortlist.sort()
-        convlist2=[]
-        funclist2=[]
-        for i in range(len(sortlist)):
-            convlist2.append(sortlist[i][0])
-            funclist2.append(sortlist[i][1])
-        # Remove redundant elements in the support list
-        convlist3=[]
-        funclist3=[]
-        for i in range(len(convlist2)):
-            if convlist2[i] not in convlist3:
-                convlist3.append(convlist2[i])
-                funclist3.append(funclist2[i])
-            else:
-                funclist3[convlist3.index(convlist2[i])]+=funclist2[i]
-        # Create and return the new random variable
-        return RV(funclist3,convlist3,['discrete','pdf'])
-                
-def Transform(RVar,gX):
-    """
-    Procedure Name: Transform
-    Purpose: Compute the transformation of a random variable
-                by a a function g(x)
-    Arguments:  1. RVar: A random variable
-                2. gX: A transformation in list of two lists format
-    Output:     1. The transformation of RVar       
-    """
-
-    # Convert the RV to its PDF form
-    X_dummy=PDF(RVar)
-            
-    # If the distribution is continuous, find and return the transformation
-    if RVar.ftype[0]=='continuous':
-        # If the support of the transformation does not match up with the
-        #   support of the RV, adjust the support of the transformation
         
-        # Traverse list to find elements that are not within the support
-        #   of the rv
-        for i in range(len(gX[1])):
-            if gX[1][i]<X_dummy.support[0]:
-                gX[1][i]=X_dummy.support[0]
-            if gX[1][i]>X_dummy.support[len(X_dummy.support)-1]:
-                gX[1][i]=X_dummy.support[len(X_dummy.support)-1]
-        # Delete segments of the transformation that will not be used
-        for i in range(len(gX[0])-1):
-            if gX[1][i]==gX[1][i+1]:
-                gX[0].remove(gX[0][i])
-                gX[1].remove(gX[1][i+1])                   
-        # Create a list of mappings x->g(x)
-        mapping=[]
-        for i in range(len(gX[0])):
-            mapping.append([gX[0][i].subs(x,gX[1][i]),
-                            gX[0][i].subs(x,gX[1][i+1])])
-        # Create the support for the transformed random variable
-        trans_supp=[]
-        for i in range(len(mapping)):
-            for j in range(2):
-                if mapping[i][j] not in trans_supp:
-                    trans_supp.append(mapping[i][j])
-        trans_supp.sort()
-        # Find which segment of the transformation each transformation
-        #   function applies to
-        applist=[]
-        for i in range(len(mapping)):
-            temp=[]
-            for j in range(len(trans_supp)-1):
-                if min(mapping[i])<=trans_supp[j]:
-                    if max(mapping[i])>=trans_supp[j+1]:
-                        temp.append(j)
-            applist.append(temp)
-        # Find the appropriate inverse for each g(x)
-        ginv=[]
-        for i in range(len(gX[0])):
-            # Find the 'test point' for the inverse
-            if [gX[1][i],gX[1][i+1]]==[-oo,oo]:
-                c=0
-            elif gX[1][i]==-oo and gX[1][i+1]!=oo:
-                c=gX[1][i+1]-1
-            elif gX[1][i]!=-oo and gX[1][i+1]==oo:
-                c=gX[1][i]+1
-            else:
-                c=(gX[1][i]+gX[1][i+1])/2
-            # Create a list of possible inverses
-            invlist=solve(gX[0][i]-t,x)
-            # Use the test point to determine the correct inverse
-            for i in range(len(invlist)):
-                # If g-1(g(c))=c, then the inverse is correct
-                if invlist[i].subs(t,gX[0][i].subs(x,c))==c:
-                    ginv.append(invlist[i])
-        # Find the transformation function for each segment
-        seg_func=[]
-        for i in range(len(X_dummy.func)):
-            # Only find transformation for applicable segments
-            for j in range(len(gX[0])):
-                if gX[1][j]>=X_dummy.support[i]:
-                    if gX[1][j+1]<=X_dummy.support[i+1]:
-                        if type(X_dummy.func[i]) not in [float,int]:
-                            tran=X_dummy.func[i].subs(x,ginv[j])*diff(ginv[j],t)
-                        else:
-                            tran=X_dummy.func[i]*diff(ginv[j],t)
-                        seg_func.append(tran)
-        # Sum the transformations for each piece of the transformed
-        #   random variable
-        trans_func=[]
-        for i in range(len(trans_supp)-1):
-            h=0
-            for j in range(len(seg_func)):
-                if i in applist[j]:
-                    if mapping[j][0]<mapping[j][1]:
-                        h=h+seg_func[j]
-                    else:
-                        h=h-seg_func[j]
-            trans_func.append(h)
-        # Substitute x into the transformed random variable
-        trans_func2=[]
-        for i in range(len(trans_func)):
-            trans_func2.append(trans_func[i].subs(t,x))
-        # Create and return the random variable
-        return RV(trans_func2,trans_supp,['continuous','pdf'])
+        
+                                         
+                                         
+        
             
                            
             
