@@ -1,14 +1,6 @@
 ######################################################################
 # ApplPy Software 2012 Matthew Robinson, Matthew Jackiewicz          #
-# Version 0.5, last updated 01 April 2012                            #
-######################################################################
-
-######################################################################
-# Outstanding Issues:
-#   1. Sympy has trouble integrating the normal distribution
-#       -- appears to be fixed in the github release of sympy
-#   2. Sympy cannot integrate Abs(x) (required to complete
-#       self.verifyPDF()
+# Version 0.5, last updated 16 April 2012                            #
 ######################################################################
 
 """
@@ -861,11 +853,30 @@ def BootstrapRV(varlist):
 Procedures on One Random Variable
 
 Procedures:
-    1. Mean(RVar)
-    2. Transform(RVar,gX)
-    3. Truncate(RVar,[lw,up])
-    4. Variance(RVar)
+    1. ConvolutionIID(RVar,n)
+    2. Mean(RVar)
+    3. Transform(RVar,gX)
+    4. Truncate(RVar,[lw,up])
+    5. Variance(RVar)
 """
+
+def ConvolutionIID(RVar,n):
+    """
+    Procedure Name: ConvolutionIID
+    Purpose: Compute the convolution of n iid random variables
+    Arguments:  1. RVar: A random variable
+                2. n: an integer
+    Output: The convolution of n iid random variables
+    """
+    # Check to make sure n is an integer
+    if type(n)!=int:
+        raise RVError('The second argument must be an integer')
+
+    # Compute the iid convolution
+    X_dummy=RVar
+    for i in range(n-2):
+        X_dummy+=X_dummy
+    return X_dummy
 
 def Mean(RVar):
     """
@@ -1091,8 +1102,48 @@ def Truncate(RVar,supp):
         area=CDF(cdf_dummy,supp[1])-CDF(cdf_dummy,supp[0])
         # Cut out parts of the distribution that don't fall
         #   within the new limits
-        
-    
+        for i in range(len(X_dummy.func)):
+            if supp[0]>=X_dummy.support[i]:
+                if supp[0]<=X_dummy.support[i+1]:
+                    lwindx=i
+            if supp[1]>=X_dummy.support[i]:
+                if supp[1]<=X_dummy.support[i+1]:
+                    upindx=i
+        print lwindx,upindx
+        truncfunc=[]
+        for i in range(len(X_dummy.func)):
+            if i>=lwindx and i<=upindx:
+                truncfunc.append(X_dummy.func[i]/area)
+        truncsupp=[supp[0]]
+        upindx+=1
+        for i in range(len(X_dummy.support)):
+            if i>lwindx and i<upindx:
+                truncsupp.append(X_dummy.support[i])
+        truncsupp.append(supp[1])
+        # Return the truncated random variable
+        return RV(truncfunc,truncsupp,['continuous','pdf'])
+
+    # If the distribution is discrete, find and return the
+    #   truncated random variable
+    if RVar.ftype[0]=='discrete':
+        # Find the area of the truncated random variable
+        area=0
+        for i in range(len(X_dummy.support)):
+            if X_dummy.support[i]>=supp[0]:
+                if X_dummy.support[i]<=supp[1]:
+                    area+=X_dummy.func[i]
+        # Truncate the random variable and find the probability
+        #   at each point
+        truncfunc=[]
+        truncsupp=[]
+        for i in range(len(X_dummy.support)):
+            if X_dummy.support[i]>=supp[0]:
+                if X_dummy.support[i]<=supp[1]:
+                    truncfunc.append(X_dummy.func[i]/area)
+                    truncsupp.append(X_dummy.support[i])
+        # Return the truncated random variable
+        return RV(truncfunc,truncsupp,['discrete','pdf'])     
+
 
 def Variance(RVar):
     """
