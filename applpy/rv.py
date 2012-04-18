@@ -119,11 +119,35 @@ class RV:
         """
         return len(self.func)
 
+    # Set the behavior for the operators '+,-,*,/'
+
     def __add__(self,other):
         """
         Sets the behavior of the '+' operator
         """
         return Convolution(self,other)
+
+    def __sub__(self,other):
+        """
+        Sets the behavior of the '-' operator
+        """
+        gX=[[-x],[-oo,oo]]
+        RVar=Transform(other,gX)
+        return Convolution(self,RVar)
+
+    def __mul__(self,other):
+        """
+        Sets the behavior of the '*' operator
+        """
+        return Product(self,other)
+
+    def __div__(self,other):
+        """
+        Sets the behavior of the '/' operator
+        """
+        gX=[[1/x],[-oo,oo]]
+        RVar=Transform(other,gX)
+        return Product(self,RVar)
 
         # To add later:
         #   1. self.__getitem__() / self.__delitem__ for use in dictionaries
@@ -1043,7 +1067,7 @@ def Transform(RVar,gXt):
         # Substitute x into the transformed random variable
         trans_func2=[]
         for i in range(len(trans_func)):
-            trans_func2.append(trans_func[i].subs(t,x))
+            trans_func2.append(trans_func[i].subs(t,x).simplify())
         # Create and return the random variable
         return RV(trans_func2,trans_supp,['continuous','pdf'])
 
@@ -1109,7 +1133,6 @@ def Truncate(RVar,supp):
             if supp[1]>=X_dummy.support[i]:
                 if supp[1]<=X_dummy.support[i+1]:
                     upindx=i
-        print lwindx,upindx
         truncfunc=[]
         for i in range(len(X_dummy.func)):
             if i>=lwindx and i<=upindx:
@@ -1194,6 +1217,7 @@ Procedures on Two Random Variables
 
 Procedures:
     1. Convolution(RVar1,RVar2)
+    2. Product(RVar1,RVar2)
 """
                     
 def Convolution(RVar1,RVar2):
@@ -1224,6 +1248,19 @@ def Convolution(RVar1,RVar2):
             func2=X2_dummy.func[0].subs(x,z-x)
             conv=integrate(func1*func2,(x,0,z))
             return RV([conv.subs(z,x)],[0,oo],['continuous','pdf'])
+        # Otherwise, compute the convolution using the product method
+        else:
+            gln=[[ln(x)],[0,oo]]
+            ge=[[exp(x),exp(x)],[-oo,0,oo]]
+            temp1=Transform(X1_dummy,ge)
+            temp2=Transform(X2_dummy,ge)
+            temp3=Product(temp1,temp2)
+            fz=Transform(temp3,gln)
+            convfunc=[]
+            for i in range(len(fz.func)):
+                convfunc.append(fz.func[i].simplify())
+            return RV(convfunc,fz.support,['continuous','pdf'])
+            
 
     # If the distributions are discrete, find and return the convolution
     #   of the two random variables.
@@ -1259,7 +1296,131 @@ def Convolution(RVar1,RVar2):
         # Create and return the new random variable
         return RV(funclist3,convlist3,['discrete','pdf'])
 
-
+def Product(RVar1,RVar2):
+    """
+    Procedure Name: Product
+    Purpose: Compute the product of two independent
+                random variables
+    Arguments:  1. RVar1: A random variable
+                2. RVar2: A random variable
+    Output:     1. The product of RVar1 and RVar2        
+    """
+    #
+    # Needs further debugging, as well as quadrants II,III,IV 
+    #
+    
+    # If the random variable is continuous, find and return the
+    #   product of the two random variables
+    if RVar1.ftype[0]=='continuous':
+        v=Symbol('v')
+        # Place zero in the support of X if it is not there already
+        X1=PDF(RVar1)
+        xfunc=[]
+        xsupp=[]
+        for i in range(len(X1.func)):
+            xfunc.append(X1.func[i])
+            xsupp.append(X1.support[i])
+            if X1.support[i]<0:
+                if X1.support[i+1]>0:
+                    xfunc.append(X1.func[i])
+                    xsupp.append(0)
+        xsupp.append(X1.support[len(X1.support)-1])
+        X_dummy=RV(xfunc,xsupp,['continuous','pdf'])
+        # Place zero in the support of Y if it is not already there
+        Y1=PDF(RVar2)
+        yfunc=[]
+        ysupp=[]
+        for i in range(len(Y1.func)):
+            yfunc.append(Y1.func[i])
+            ysupp.append(Y1.support[i])
+            if Y1.support[i]<0:
+                if Y1.support[i+1]>0:
+                    yfunc.append(Y1.func[i])
+                    ysupp.append(0)
+        ysupp.append(Y1.support[len(Y1.support)-1])
+        Y_dummy=RV(yfunc,ysupp,['continuous','pdf'])
+        # Initialize the support list for the product V=X*Y
+        vsupp=[]
+        for i in range(len(X_dummy.support)):
+            for j in range(len(Y_dummy.support)):
+                val=X_dummy.support[i]*Y_dummy.support[j]
+                if val not in vsupp:
+                    vsupp.append(val)
+        vsupp.sort()
+        # Initialize the pdf segments of v
+        vfunc=[]
+        for i in range(len(vsupp)-1):
+            vfunc.append(0)
+        # Loop through each piecewise segment of X
+        for i in range(len(X_dummy.func)):
+            # Loop through each piecewise segment of Y
+            for j in range(len(Y_dummy.func)):
+                # Define the corner of the rectangular region
+                a=X_dummy.support[i]
+                b=X_dummy.support[i+1]
+                c=Y_dummy.support[j]
+                d=Y_dummy.support[j+1]
+            # If the region is in the first quadrant, compute the
+            #   required integrals sequentially
+            if a>=0 and c>=0:
+                if type(Y_dummy.func[j]) not in [float,int]:
+                    gj=Y_dummy.func[j].subs(x,v/x)
+                else:
+                    gj=Y_dummy.func[j]
+                fi=X_dummy.func[i]
+                pv=integrate(fi*gj*(1/x),(x,a,b))
+                if d<oo:
+                    qv=integrate(fi*gj*(1/x),(x,v/d,b))
+                if c>0:
+                    rv=integrate(fi*gj*(1/x),(x,a,v/c))
+                if c>0 and d<oo and a*d<b*c:
+                    sv=integrate(fi*gj*(1/x),(x,v/d,v/c))
+                if c==0 and d==oo:
+                    for k in range(len(vfunc)):
+                        if vsupp[k]>=0:
+                            vfunc[k]+=pv
+                if c==0 and d<oo:
+                    for k in range(len(vfunc)):
+                        if vsupp[k]>=0 and v[k+1]<=a*d:
+                            vfunc[k]+=pv
+                        if vsupp[k]>=a*d and v[k+1]<=b*d:
+                            vfunc[k]+=qv
+                if c>0 and d==oo:
+                    for k in range(len(vfunc)):
+                        if vsupp[k]>=b*c:
+                            vfunc[k]+=pv
+                        if vsupp[k]>=a*c and v[k+1]<=b*c:
+                            vfunc[k]+=rv
+                if c>0 and d<oo:
+                    if a*d<b*c:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                                vfunc[k]+=rv
+                            if vsupp[k]>=a*d and vsupp[k+1]<=b*c:
+                                vfunc[k]+=sv
+                            if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                                vfunc[k]+=qv
+                    if a*d==b*c:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                                vfunc[k]+=rv
+                            if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                                vfunc[k]+=qv
+                    if a*d>b*c:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=a*c and vsupp[k+1]<=b*c:
+                                vfunc[k]+=rv
+                            if vsupp[k]>=b*c and vsupp[k+1]<=a*d:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=a*d and vsupp[k+1]<=b*d:
+                                vfunc[k]+=qv
+        vfunc_final=[]
+        for i in range(len(vfunc)):
+            if type(vfunc[i]) not in [int,float]:
+                vfunc_final.append(vfunc[i].subs(v,x))
+            else:
+                vfunc_final.append(vfunc[i])
+        return RV(vfunc_final,vsupp,['continuous','pdf'])
 """
 Utilities
 
@@ -1325,7 +1486,7 @@ def mat_plot(RVar,suplist=None):
             newstr0=strfunc.replace('exp','plt.exp')
             newstr1=newstr0.replace('log','plt.log')
             newstr=newstr1.replace('sqrt','plt.sqrt')
-            # print newstr
+            print newstr
             s=eval(newstr)
             plt.plot(x,s,linewidth=1.0,color='green')
         if RVar.ftype[1]=='idf':
