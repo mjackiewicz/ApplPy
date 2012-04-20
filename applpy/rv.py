@@ -1,19 +1,22 @@
 ######################################################################
 # ApplPy Software 2012 Matthew Robinson, Matthew Jackiewicz          #
-# Version 0.5, last updated 16 April 2012                            #
+# Version 0.5, last updated 18 April 2012                            #
 ######################################################################
 
 """
 Main Random Variable Module
 
 Defines the random variable class
-Defines basic random variable procedures
+Defines procedures for chaning functional form
+Defines procedures on on random variable
+Defines procudures on two random variables
 
 """
 
 from __future__ import division
 from sympy import *
-import pylab as plt
+import plot as plt
+# import pylab as plt
 from random import random
 x,y,z,t=symbols('x y z t')
 
@@ -1421,170 +1424,81 @@ def Product(RVar1,RVar2):
             else:
                 vfunc_final.append(vfunc[i])
         return RV(vfunc_final,vsupp,['continuous','pdf'])
+
 """
 Utilities
 
 Procedures:
     1. PlotDist(RVar,suplist)
-    2. PlotDisplay(RVar,suplist)
+    2. PlotDist(plot_list,suplist)
 """
 
-def mat_plot(RVar,suplist=None):
+def PlotDist(RVar,suplist=None,opt=None):
     """
-    Procedure Name: mat_plot
-    Purpose: Create a matplotlib plot of a random variable
+    Procedure: Plot Dist
+    Purpose: Plot a random variable
     Arguments:  1. RVar: A random variable
-                2. suplist: The support of the plot
-    Output:     1. A plot of a random variable
+                2. suplist: A list of supports for the plot
+    Output:     1. A plot of the random variable
     """
-    # Create labels
+    # Create the labels for the plot
     if RVar.ftype[1]=='cdf':
         lab1='F(x)'
         lab2='Cumulative Distribution Function'
-    if RVar.ftype[1]=='chf':
+    elif RVar.ftype[1]=='chf':
         lab1='H(x)'
         lab2='Cumulative Hazard Function'
-    if RVar.ftype[1]=='hf':
+    elif RVar.ftype[1]=='hf':
         lab1='h(x)'
         lab2='Hazard Function'
-    if RVar.ftype[1]=='idf':
+    elif RVar.ftype[1]=='idf':
         lab1='F-1(s)'
         lab2='Inverse Density Function'
-    if RVar.ftype[1]=='pdf':
+    elif RVar.ftype[1]=='pdf':
         lab1='f(x)'
         lab2='Probability Density Function'
-    if RVar.ftype[1]=='sf':
+    elif RVar.ftype[1]=='sf':
         lab1='S(X)'
         lab2='Survivor Function'
-    # Plot the function
-    # if the random variable is continuous, plot the function
+
+    # If the distribution is continuous, plot the function
     if RVar.ftype[0]=='continuous':
         # Create a list of supports for the plot
+        if suplist==None:
+            suplist=[RVar.support[0],
+                     RVar.support[len(RVar.support)-1]]
+            if -oo in suplist:
+                suplist[0]=float(RVar.variate(s=.01)[0])
+            if oo in suplist:
+                suplist[1]=float(RVar.variate(s=.99)[0])
         plot_sup=[]
         for i in range(len(RVar.support)):
             if suplist[0]>RVar.support[i]:
-                if type(suplist[0]) not in [float,int]:
-                    plot_sup.append(suplist[0].evalf())
-                else:
-                    plot_sup.append(suplist[0])
+                plot_sup.append(float(suplist[0]))
             elif suplist[1]<RVar.support[i]:
-                if type(suplist[1]) not in [float,int]:
-                    plot_sup.append(suplist[1].evalf())
-                else:
-                    plot_sup.append(suplist[1])
+                plot_sup.append(float(suplist[i]))
             else:
-                if type(RVar.support[i]) not in [float,int]:
-                    plot_sup.append(RVar.support[i].evalf())
-                else:
-                    plot_sup.append(RVar.support[i])
-        if 0 in plot_sup:
-            plot_sup[plot_sup.index(0)]=0.0000000001
+                plot_sup.append(float(RVar.support[i]))
         print plot_sup
+        # Create a list of functions for the plot
+        plot_func=[]
         for i in range(len(RVar.func)):
-            x=plt.arange(plot_sup[i],plot_sup[i+1],0.01)
             strfunc=str(RVar.func[i])
-            newstr0=strfunc.replace('exp','plt.exp')
-            newstr1=newstr0.replace('log','plt.log')
-            newstr=newstr1.replace('sqrt','plt.sqrt')
-            print newstr
-            s=eval(newstr)
-            plt.plot(x,s,linewidth=1.0,color='green')
-        if RVar.ftype[1]=='idf':
-            plt.xlabel('s')
-        else:
-            plt.xlabel('x')
-        plt.ylabel(lab1)
-        plt.title(lab2)
-        plt.grid(True)
-        #plt.show()
-    # If the random variable is discrete, plot the function
+            plot_func.append(strfunc)
+        print plot_func
+        plt.mat_plot(plot_func,plot_sup,lab1,lab2,'continuous')
+        if opt!='display':
+            plt.show()
     if RVar.ftype[0]=='discrete':
-        plt.plot(RVar.support,RVar.func,'ro')
-        if RVar.ftype[1]=='idf':
-            plt.xlabel('s')
-        else:
-            plt.xlabel('x')
-        plt.ylabel(lab1)
-        plt.title(lab2)
-        plt.grid(True)
-        #plt.show()
-
-def pyg_plot(RVar,suplist=None):
-    """
-    Procedure Name: pyg_plot
-    Purpose: Create a pyglet plot of a random variable
-    Arguments:  1. RVar: A random variable
-                2. suplist: The support of the plot
-    Output:     1. A plot of a random variable
-    """
-    # Create a list of supports for the plot
-    plot_sup=[]
-    for i in range(len(RVar.support)):
-        if suplist[0]>RVar.support[i]:
-            plot_sup.append(suplist[0])
-        elif suplist[1]<RVar.support[i]:
-            plot_sup.append(suplist[1])
-        else:
-            plot_sup.append(RVar.support[i])
-    # Plot the distribution by parts
-    PlotDist=Plot()
-    for i in range(len(RVar.func)):
-        PlotDist[i]=RVar.func[i],[plot_sup[i],plot_sup[i+1]]
-        PlotDist[i].color=z 
-
-def PlotDist(RVar,suplist=None):
-    """
-    Procedure Name: PlotDist
-    Purpose: Create a plot of a random variable
-    Arguments:  1. RVar: A random variable
-                2. suplist: The support of the plot
-    Output:     1. A plot of a random variable
-    """
-    # Use RV's supports as plot support as default
-    if suplist==None:
-        suplist=[RVar.support[0],RVar.support[len(RVar.support)-1]]
-        if -oo in suplist:
-            suplist[0]=float(RVar.variate(s=.01)[0])
-        if oo in suplist:
-            suplist[1]=float(RVar.variate(s=.99)[0])
-    # Make sure plot support list has exactly two
-    # arguments
-    if len(suplist)!=2:
-        raise RVError('Plot support list must contain two elements')
-    # Make sure plot support list is in ascendng order
-    if suplist[0]>=suplist[1]:
-        raise RVError('Plot support list must be in ascending order')
-    # Make sure infinity and negative infinity are not in
-    # the support list for the plot
-    if oo in suplist or -oo in suplist:
-        raise RVError('Plot support list cannot contain oo or -oo')
-    # Try to plot using matplotlib
-    mat_plot(RVar,suplist)
-    plt.show()
+        plt.mat_plot(RVar.func,RVar.support,lab1,lab2,'discrete')
+        if opt!='display':
+            plt.show()    
 
 def PlotDisplay(plot_list,suplist=None):
-    """
-    Procedure Name: PlotDisplay
-    Purpose: Simultaneously display multiple plots
-    Arguments:  1. plot_list: a list of plots to be displayed
-                2. suplist: an optional list of supports for the plot
-    Output:     1. Multiple plots
-    """
     # Create a plot of each random variable in the plot list
     for i in range(len(plot_list)):
-        if suplist==None:
-            suplist=[plot_list[i].support[0],
-                     plot_list[i].support[len(plot_list[i].support)-1]]
-            if -oo in suplist:
-                suplist[0]=float(plot_list[i].variate(s=.01)[0])
-            if oo in suplist:
-                suplist[1]=float(plot_list[i].variate(s=.99)[0])
-        mat_plot(plot_list[i],suplist)
-    # Display the plots
+        PlotDist(plot_list[i],suplist,'display')
     plt.show()
-
-
-        
         
                                          
                                          
