@@ -144,7 +144,7 @@ class RV:
         """
         return Product(self,other)
 
-    def __div__(self,other):
+    def __truediv__(self,other):
         """
         Sets the behavior of the '/' operator
         """
@@ -1363,60 +1363,250 @@ def Product(RVar1,RVar2):
                 b=X_dummy.support[i+1]
                 c=Y_dummy.support[j]
                 d=Y_dummy.support[j+1]
-            # If the region is in the first quadrant, compute the
-            #   required integrals sequentially
-            if a>=0 and c>=0:
-                if type(Y_dummy.func[j]) not in [float,int]:
-                    gj=Y_dummy.func[j].subs(x,v/x)
-                else:
-                    gj=Y_dummy.func[j]
-                fi=X_dummy.func[i]
-                pv=integrate(fi*gj*(1/x),(x,a,b))
-                if d<oo:
-                    qv=integrate(fi*gj*(1/x),(x,v/d,b))
-                if c>0:
-                    rv=integrate(fi*gj*(1/x),(x,a,v/c))
-                if c>0 and d<oo and a*d<b*c:
-                    sv=integrate(fi*gj*(1/x),(x,v/d,v/c))
-                if c==0 and d==oo:
-                    for k in range(len(vfunc)):
-                        if vsupp[k]>=0:
-                            vfunc[k]+=pv
-                if c==0 and d<oo:
-                    for k in range(len(vfunc)):
-                        if vsupp[k]>=0 and v[k+1]<=a*d:
-                            vfunc[k]+=pv
-                        if vsupp[k]>=a*d and v[k+1]<=b*d:
-                            vfunc[k]+=qv
-                if c>0 and d==oo:
-                    for k in range(len(vfunc)):
-                        if vsupp[k]>=b*c:
-                            vfunc[k]+=pv
-                        if vsupp[k]>=a*c and v[k+1]<=b*c:
-                            vfunc[k]+=rv
-                if c>0 and d<oo:
-                    if a*d<b*c:
+                # If the region is in the first quadrant, compute the
+                #   required integrals sequentially
+                if a>=0 and c>=0:
+                    if type(Y_dummy.func[j]) not in [float,int]:
+                        gj=Y_dummy.func[j].subs(x,v/x)
+                    else:
+                        gj=Y_dummy.func[j]
+                    fi=X_dummy.func[i]
+                    pv=integrate(fi*gj*(1/x),(x,a,b))
+                    if d<oo:
+                        qv=integrate(fi*gj*(1/x),(x,v/d,b))
+                    if c>0:
+                        rv=integrate(fi*gj*(1/x),(x,a,v/c))
+                    if c>0 and d<oo and a*d<b*c:
+                        sv=integrate(fi*gj*(1/x),(x,v/d,v/c))
+                    # 1st Qd, Scenario 1
+                    if c==0 and d==oo:
                         for k in range(len(vfunc)):
-                            if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
-                                vfunc[k]+=rv
-                            if vsupp[k]>=a*d and vsupp[k+1]<=b*c:
-                                vfunc[k]+=sv
-                            if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                            if vsupp[k]>=0:
+                                vfunc[k]+=pv
+                    # 1st Qd, Scenario 2
+                    if c==0 and d<oo:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=0 and v[k+1]<=a*d:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=a*d and v[k+1]<=b*d:
                                 vfunc[k]+=qv
-                    if a*d==b*c:
+                    # 1st Qd, Scenario 3
+                    if c>0 and d==oo:
                         for k in range(len(vfunc)):
-                            if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                            if vsupp[k]>=b*c:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=a*c and v[k+1]<=b*c:
                                 vfunc[k]+=rv
-                            if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                    # 1st Qd, Scenario 4
+                    if c>0 and d<oo:
+                        # Case 1
+                        if a*d<b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=a*d and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=sv
+                                if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=qv
+                        # Case 2
+                        if a*d==b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=qv
+                        # Case 3
+                        if a*d>b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*c and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=b*c and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=pv
+                                if vsupp[k]>=a*d and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=qv
+                # If the region is in the second quadrant, compute
+                #   the required integrals sequentially
+                if a<0 and c<0:
+                    if type(Y_dummy.func[j]) not in [float,int]:
+                        gj=Y_dummy.func[j].subs(x,v/x)
+                    else:
+                        gj=Y_dummy.func[j]
+                    fi=X_dummy.func[i]
+                    pv=-integrate(fi*gj*(1/x),(x,a,b))
+                    if d<0:
+                        qv=-integrate(fi*gj*(1/x),(x,(v/d),b))
+                    if c>-oo:
+                        rv=-integrate(fi*gj*(1/x),(x,a,(v/c)))
+                    if c>-oo and d<0:
+                        sv=-integrate(fi*gj*(1/x),(x,(v/d),(v/c)))
+                    # 2nd Qd, Scenario 1
+                    if c==-oo and d==0:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=0:
+                                vfunc[k]+=pv
+                    # 2nd Qd, Scenario 2
+                    if c==-oo and d<0:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=a*d and vsupp[k+1]<=oo:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=b*d and vsupp[k+1]<=a*d:
                                 vfunc[k]+=qv
-                    if a*d>b*c:
+                    # 2nd Qd, Scenario 3
+                    if c>-oo and d==0:
                         for k in range(len(vfunc)):
-                            if vsupp[k]>=a*c and vsupp[k+1]<=b*c:
+                            if vsupp[k]>=0 and vsupp[k+1]<=b*c:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=b*c and vsupp[k+1]<=a*c:
                                 vfunc[k]+=rv
-                            if vsupp[k]>=b*c and vsupp[k+1]<=a*d:
+                    # 2nd Qd, Scenario 4
+                    if c>-oo and d<0:
+                        # Case 1
+                        if a*d>b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*d and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=b*c and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=sv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=qv
+                        # Case 2
+                        if a*d==b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*d and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=qv
+                        # Case 3
+                        if a*d<b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=b*c and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=a*d and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=pv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=qv
+                # If the region is in the third quadrant, compute
+                #   the required integrals sequentially
+                if a<0 and c>=0:
+                    if type(Y_dummy.func[j]) not in [float,int]:
+                        gj=Y_dummy.func[j].subs(x,v/x)
+                    else:
+                        gj=Y_dummy.func[j]
+                    fi=X_dummy.func[i]
+                    pv=-integral(fi*gj*(1/x),(x,a,b))
+                    if d<oo:
+                        qv=-integral(fi*gj*(1/x),(x,a,(v/d)))
+                    if c>0:
+                        rv=-integral(fi*gj*(1/x),(x,(v/c),b))
+                    if c>0 and d<oo:
+                        sv=-integral(fi*gj*(1/x),(x,(v/c),(v/d)))
+                    # 3rd Qd, Scenario 1
+                    if c==0 and d==oo:
+                        for k in range(len(vfunc)):
+                            if vsupp[k+1]<=0:
+                                vfunc[k]+=pv
+                    # 3rd Qd, Scenario 2
+                    if c==0 and d<oo:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=b*d and vsupp[k+1]<=0:
                                 vfunc[k]+=pv
                             if vsupp[k]>=a*d and vsupp[k+1]<=b*d:
                                 vfunc[k]+=qv
+                    # 3rd Qd, Scenario 3
+                    if c>0 and d<oo:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=-oo and vsupp[k+1]<=a*c:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=a*c and vsupp[k+1]<=b*c:
+                                vfunc[k]+=rv
+                    # 3rd Qd, Scenario 4
+                    if c>0 and d<oo:
+                        # Case 1
+                        if b*d>a*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=b*d and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=a*c and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=sv
+                                if vsupp[k]>=a*d and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=qv
+                        # Case 2
+                        if a*c==b*d:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*d and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=qv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=rv
+                        # Case 3
+                        if a*c>b*d:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=a*c and vsupp[k+1]<=b*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=pv
+                                if vsupp[k]>=a*d and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=qv
+                # If the region is in the fourth quadrant, compute
+                #   the required integrals sequentially
+                if a>=0 and c<0:
+                    if type(Y_dummy.func[j]) not in [float,int]:
+                        gj=Y_dummy.func[j].subs(x,v/x)
+                    else:
+                        gj=Y_dummy.func[j]
+                    fi=X_dummy.func[i]
+                    pv=integrate(fi*gj*(1/x),(x,a,b))
+                    if d<0:
+                        qv=integrate(fi*gj*(1/x),(x,a,(v/d)))
+                    if c>-oo:
+                        rv=integrate(fi*gj*(1/x),(x,(v/c),b))
+                    if c>-oo and d<0:
+                        sv=integrate(fi*gj*(1/x),(x,(v/c),(v/d)))
+                    # 4th Qd, Scenario 1
+                    if c==oo and d==0:
+                        for k in range(len(vfunc)):
+                            if vsupp[k+1]<=0:
+                                vfunc[k]+=pv
+                    # 4th Qd, Scenario 2
+                    if c==oo and d<0:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=-oo and vsupp[k+1]<=b*d:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=b*d and vsupp[k+1]<=a*d:
+                                vfunc[k]+=qv
+                    # 4th Qd, Scenario 3
+                    if c>-oo and d==0:
+                        for k in range(len(vfunc)):
+                            if vsupp[k]>=a*c and vsupp[k+1]<=0:
+                                vfunc[k]+=pv
+                            if vsupp[k]>=b*c and vsupp[k+1]<=a*c:
+                                vfunc[k]+=rv
+                    # 4th Qd, Scenario 4
+                    if c>-oo and d<0:
+                        # Case 1
+                        if a*c>b*d:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=b*c and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=sv
+                                if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=qv
+                        # Case 2
+                        if a*d==b*c:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=b*c and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=a*c and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=qv
+                        # Case 3
+                        if a*c<b*d:
+                            for k in range(len(vfunc)):
+                                if vsupp[k]>=b*c and vsupp[k+1]<=a*c:
+                                    vfunc[k]+=rv
+                                if vsupp[k]>=a*c and vsupp[k+1]<=b*d:
+                                    vfunc[k]+=pv
+                                if vsupp[k]>=b*d and vsupp[k+1]<=a*d:
+                                    vfunc[k]+=qv                   
         vfunc_final=[]
         for i in range(len(vfunc)):
             if type(vfunc[i]) not in [int,float]:
@@ -1424,6 +1614,39 @@ def Product(RVar1,RVar2):
             else:
                 vfunc_final.append(vfunc[i])
         return RV(vfunc_final,vsupp,['continuous','pdf'])
+    # If the distributions are discrete, find and return the product
+    #   of the two random variables.
+    if RVar1.ftype[0]=='discrete':
+        # Convert each random variable to its pdf form
+        X1_dummy=PDF(RVar1)
+        X2_dummy=PDF(RVar2)
+        # Create function and support lists for the product of the
+        #   two random variables
+        prodlist=[]
+        funclist=[]
+        for i in range(len(X1_dummy.support)):
+            for j in range(len(X2_dummy.support)):
+                prodlist.append(X1_dummy.support[i]*X2_dummy.support[j])
+                funclist.append(X1_dummy.func[i]*X2_dummy.func[j])
+        # Sort the function and support lists for the convolution
+        sortlist=zip(prodlist,funclist)
+        sortlist.sort()
+        prodlist2=[]
+        funclist2=[]
+        for i in range(len(sortlist)):
+            prodlist2.append(sortlist[i][0])
+            funclist2.append(sortlist[i][1])
+        # Remove redundant elements in the support list
+        prodlist3=[]
+        funclist3=[]
+        for i in range(len(prodlist2)):
+            if prodlist2[i] not in prodlist3:
+                prodlist3.append(prodlist2[i])
+                funclist3.append(funclist2[i])
+            else:
+                funclist3[prodlist3.index(prodlist2[i])]+=funclist2[i]
+        # Create and return the new random variable
+        return RV(funclist3,prodlist3,['discrete','pdf'])
 
 """
 Utilities
@@ -1473,19 +1696,19 @@ def PlotDist(RVar,suplist=None,opt=None):
                 suplist[1]=float(RVar.variate(s=.99)[0])
         plot_sup=[]
         for i in range(len(RVar.support)):
-            if suplist[0]>RVar.support[i]:
+            if suplist[0]>=RVar.support[i]:
                 plot_sup.append(float(suplist[0]))
-            elif suplist[1]<RVar.support[i]:
-                plot_sup.append(float(suplist[i]))
+            elif suplist[1]<=RVar.support[i]:
+                plot_sup.append(float(suplist[1]))
             else:
                 plot_sup.append(float(RVar.support[i]))
-        print plot_sup
+        #print plot_sup
         # Create a list of functions for the plot
         plot_func=[]
         for i in range(len(RVar.func)):
             strfunc=str(RVar.func[i])
             plot_func.append(strfunc)
-        print plot_func
+        #print plot_func
         plt.mat_plot(plot_func,plot_sup,lab1,lab2,'continuous')
         if opt!='display':
             plt.show()
