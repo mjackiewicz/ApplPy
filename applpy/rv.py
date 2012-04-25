@@ -8,7 +8,7 @@ Main Random Variable Module
 
 Defines the random variable class
 Defines procedures for chaning functional form
-Defines procedures on on random variable
+Defines procedures on one random variable
 Defines procudures on two random variables
 
 """
@@ -16,7 +16,6 @@ Defines procudures on two random variables
 from __future__ import division
 from sympy import *
 import plot as plt
-# import pylab as plt
 from random import random
 x,y,z,t=symbols('x y z t')
 
@@ -78,7 +77,6 @@ class RV:
         #   discrete or continuous
         if ftype[0] not in ['continuous','discrete']:
             raise RVError('Random variable must either be discrete or continuous')
-
         # Initialize the random variable
         self.func=func
         self.support=support
@@ -881,10 +879,13 @@ Procedures on One Random Variable
 
 Procedures:
     1. ConvolutionIID(RVar,n)
-    2. Mean(RVar)
-    3. Transform(RVar,gX)
-    4. Truncate(RVar,[lw,up])
-    5. Variance(RVar)
+    2. MaximumIID(RVar,n)
+    3. Mean(RVar)
+    4. MinimumIID(RVar,n)
+    5. OrderStat(X,n,r)
+    6. Transform(RVar,gX)
+    7. Truncate(RVar,[lw,up])
+    8. Variance(RVar)
 """
 
 def ConvolutionIID(RVar,n):
@@ -903,6 +904,24 @@ def ConvolutionIID(RVar,n):
     X_dummy=RVar
     for i in range(n-2):
         X_dummy+=X_dummy
+    return X_dummy
+
+def MaximumIID(RVar,n):
+    """
+    Procedure Name: MaximumIID
+    Purpose: Comput the maximum of n iid random variables
+    Arguments:  1. RVar: A random variable
+                2. n: an integer
+    Output:     1. The maximum of n iid random variables
+    """
+    # Check to make sure n is an integer
+    if type(n)!=int:
+        raise RVError('The second argument must be an integer')
+
+    # Compute the iid maximum
+    X_dummy=RVar
+    for i in range(n-2):
+        X_dummy=Maximum(X_dummy,X_dummy)
     return X_dummy
 
 def Mean(RVar):
@@ -938,6 +957,60 @@ def Mean(RVar):
         for i in range(len(meanlist)):
             meanval+=meanlist[i]
         return meanval
+
+def MinimumIID(RVar,n):
+    """
+    Procedure Name: MinimumIID
+    Purpose: Comput the minimum of n iid random variables
+    Arguments:  1. RVar: A random variable
+                2. n: an integer
+    Output:     1. The minimum of n iid random variables
+    """
+    # Check to make sure n is an integer
+    if type(n)!=int:
+        raise RVError('The second argument must be an integer')
+
+    # Compute the iid minimum
+    X_dummy=RVar
+    for i in range(n-2):
+        X_dummy=Minimum(X_dummy,X_dummy)
+    return X_dummy
+
+def OrderStat(RVar,n,r):
+    """
+    Procedure Name: OrderStat
+    Purpose: Compute the distribution of the rth order statistic
+                from a sample puplation of n
+    Arguments:  1. RVar: A random variable
+                2. n: The number of items randomly drawn from the rv
+                3. r: The index of the order statistic
+    Output:     1. The desired r out of n OrderStatistic
+    """
+    if r>n:
+        raise RVError('The index cannot be greater than the sample size')
+
+    # If the distribution is continuous, find and return the value of the
+    #   order statistic
+    if RVar.ftype[0]=='continuous':
+        # Compute the PDF, CDF and SF of the random variable
+        pdf_dummy=PDF(RVar)
+        cdf_dummy=CDF(RVar)
+        sf_dummy=SF(RVar)
+        # Compute the factorial constant
+        const=(factorial(n))/(factorial(r-1)*factorial(n-r))
+        # Compute the distribution of the order statistic for each
+        #   segment
+        ordstat_func=[]
+        for i in range(len(RVar.func)):
+            fx=pdf_dummy.func[i]
+            Fx=cdf_dummy.func[i]
+            Sx=sf_dummy.func[i]
+            ordfunc=const*(Fx**(r-1))*(Sx**(n-r))*fx
+            ordstat_func.append(ordfunc.simplify())
+        # Return the distribution of the order statistic
+        return RV(ordstat_func,RVar.support,['continuous','pdf'])
+            
+    
 
                 
 def Transform(RVar,gXt):
@@ -1220,7 +1293,9 @@ Procedures on Two Random Variables
 
 Procedures:
     1. Convolution(RVar1,RVar2)
-    2. Product(RVar1,RVar2)
+    2. Maximum(RVar1,RVar2)
+    3. Minimum(RVar1,RVar2)
+    4. Product(RVar1,RVar2)
 """
                     
 def Convolution(RVar1,RVar2):
@@ -1298,6 +1373,132 @@ def Convolution(RVar1,RVar2):
                 funclist3[convlist3.index(convlist2[i])]+=funclist2[i]
         # Create and return the new random variable
         return RV(funclist3,convlist3,['discrete','pdf'])
+
+def Maximum(RVar1,RVar2):
+    """
+    Procedure Name: Maximum
+    Purpose: Compute cdf of the maximum of RVar1 and RVar2
+    Arguments:  1. RVar1: A random variable
+                2. RVar2: A random variable
+    Output:     1. The cdf of the maximum distribution
+    """
+
+    # If the two random variables are not of the same type
+    #   raise an error
+    if RVar1.ftype[0]!=RVar2.ftype[0]:
+        raise RVError('The RVs must both be discrete or continuous')
+
+    # If the distributions are continuous, find and return the max
+    if RVar1.ftype[0]=='continuous':
+        # Special case for lifetime distributions
+        if RVar1.support==[0,oo] and RVar2.support==[0,oo]:
+            cdf_dummy1=CDF(RVar1)
+            cdf_dummy2=CDF(RVar2)
+            cdf1=cdf_dummy1.func[0]
+            cdf2=cdf_dummy2.func[0]
+            maxfunc=cdf1*cdf2
+            return RV(maxfunc.simplify(),[0,oo],['continuous','cdf'])
+        # Otherwise, compute the min using the full algorithm
+        Fx=CDF(RVar1)
+        Fy=CDF(RVar2)
+        # Create a support list for the 
+        max_supp=[]
+        for i in range(len(Fx.support)):
+            if Fx.support[i] not in max_supp:
+                max_supp.append(Fx.support[i])
+        for i in range(len(Fy.support)):
+            if Fy.support[i] not in max_supp:
+                max_supp.append(Fy.support[i])
+        max_supp.sort()
+        # Remove any elements that are above the lower support max
+        lowval=max(min(Fx.support),min(Fy.support))
+        max_supp2=[]
+        for i in range(len(max_supp)):
+            if max_supp[i]>=lowval:
+                max_supp2.append(max_supp[i])
+        # Compute the minimum function for each segment
+        xindx=0
+        yindx=0
+        max_func=[]
+        for i in range(len(max_supp2)-1):
+            if max_supp2[i]>Fx.support[0]:
+                currFx=0
+            elif max_supp2[i]==Fx.support[xindx]:
+                currFx=Fx.func[xindx]
+                xindx+=1
+            if max_supp2[i]>Fy.support[yindx]:
+                currFy=0
+            elif max_supp2[i]==Fy.support[yindx]:
+                currFy=Fy.func[yindx]
+                yindx+=1
+            Fmax=-(1-currFx)*(1-currFy)
+            Fax=Fmax.simplify()
+            max_func.append(Fmax)
+        # Return the random variable
+        return RV(max_func,max_supp2,['continuous','cdf'])
+
+def Minimum(RVar1,RVar2):
+    """
+    Procedure Name: Minimum
+    Purpose: Compute the distribution of the minimum of RVar1 and RVar2
+    Arguments:  1. RVar1: A random variable
+                2. RVar2: A random variable
+    Output:     1. The minimum of the two random variables
+    """
+
+    # If the two random variables are not of the same type
+    #   raise an error
+    if RVar1.ftype[0]!=RVar2.ftype[0]:
+        raise RVError('The RVs must both be discrete or continuous')
+
+    # If the distributions are continuous, find and return the min
+    if RVar1.ftype[0]=='continuous':
+        # Special case for lifetime distributions
+        if RVar1.support==[0,oo] and RVar2.support==[0,oo]:
+            sf_dummy1=SF(RVar1)
+            sf_dummy2=SF(RVar2)
+            sf1=sf_dummy1.func[0]
+            sf2=sf_dummy2.func[0]
+            minfunc=1-(sf1*sf2)
+            return RV(minfunc.simplify(),[0,oo],['continuous','cdf'])
+        # Otherwise, compute the min using the full algorithm
+        Fx=CDF(RVar1)
+        Fy=CDF(RVar2)
+        # Create a support list for the 
+        min_supp=[]
+        for i in range(len(Fx.support)):
+            if Fx.support[i] not in min_supp:
+                min_supp.append(Fx.support[i])
+        for i in range(len(Fy.support)):
+            if Fy.support[i] not in min_supp:
+                min_supp.append(Fy.support[i])
+        min_supp.sort()
+        # Remove any elements that are above the lower support max
+        highval=min(max(Fx.support),max(Fy.support))
+        min_supp2=[]
+        for i in range(len(min_supp)):
+            if min_supp[i]<=highval:
+                min_supp2.append(min_supp[i])
+        # Compute the minimum function for each segment
+        xindx=0
+        yindx=0
+        min_func=[]
+        for i in range(len(min_supp2)-1):
+            if min_supp2[i]<Fx.support[0]:
+                currFx=0
+            elif min_supp2[i]==Fx.support[xindx]:
+                currFx=Fx.func[xindx]
+                xindx+=1
+            if min_supp2[i]<Fy.support[yindx]:
+                currFy=0
+            elif min_supp2[i]==Fy.support[yindx]:
+                currFy=Fy.func[yindx]
+                yindx+=1
+            Fmin=1-(1-currFx)*(1-currFy)
+            Fmin=Fmin.simplify()
+            min_func.append(Fmin)
+        # Return the random variable
+        return RV(min_func,min_supp2,['continuous','cdf'])
 
 def Product(RVar1,RVar2):
     """
@@ -1695,20 +1896,36 @@ def PlotDist(RVar,suplist=None,opt=None):
             if oo in suplist:
                 suplist[1]=float(RVar.variate(s=.99)[0])
         plot_sup=[]
+        if suplist[0]>RVar.support[0]:
+            plot_sup.append(float(suplist[0]))
         for i in range(len(RVar.support)):
-            if suplist[0]>=RVar.support[i]:
-                plot_sup.append(float(suplist[0]))
-            elif suplist[1]<=RVar.support[i]:
-                plot_sup.append(float(suplist[1]))
-            else:
-                plot_sup.append(float(RVar.support[i]))
-        #print plot_sup
+            if RVar.support[i]>=suplist[0]:
+                if RVar.support[i]<=suplist[1]:
+                    if RVar.support[i] not in plot_sup:
+                        plot_sup.append(float(RVar.support[i]))
+        if suplist[1]<RVar.support[len(RVar.support)-1]:
+            plot_sup.append(float(suplist[1]))
+        print plot_sup
         # Create a list of functions for the plot
+        for i in range(len(RVar.func)):
+            if suplist[0]>=RVar.support[i]:
+                if suplist[0]<=RVar.support[i+1]:
+                    lwindx=i
+            if suplist[1]>=RVar.support[i]:
+                if suplist[1]<=RVar.support[i+1]:
+                    upindx=i
         plot_func=[]
         for i in range(len(RVar.func)):
-            strfunc=str(RVar.func[i])
-            plot_func.append(strfunc)
-        #print plot_func
+            if i>=lwindx and i<=upindx:
+                strfunc=str(RVar.func[i])
+                plot_func.append(strfunc)
+        plot_sup=[suplist[0]]
+        upindx+=1
+        for i in range(len(RVar.support)):
+            if i>lwindx and i<upindx:
+                plot_sup.append(RVar.support[i])
+        plot_sup.append(suplist[1])
+        print plot_func
         plt.mat_plot(plot_func,plot_sup,lab1,lab2,'continuous')
         if opt!='display':
             plt.show()
