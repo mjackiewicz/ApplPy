@@ -9,6 +9,5 @@ Main ApplPy Module
 Imports supporting ApplPy Modules
 
 """
-
 from rv import *
 from dist_type import *

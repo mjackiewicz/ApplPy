@@ -312,7 +312,7 @@ def CDF(RVar,value=x):
             # Compute the sf for each segment
             cdflist=[]
             for i in range(len(X_dummy.func)):
-                cdflist.append(1-X_dummy.funcCD[i])
+                cdflist.append(1-X_dummy.func[i])
             # If no value is specified, return the sf function
             if value==x:
                 return RV(cdflist,X_dummy.support,['continuous','cdf'])
@@ -361,10 +361,12 @@ def CDF(RVar,value=x):
             if value==x:
                 return RVar
             if value!=x:
-                if value not in RVar.support:
-                    return 0
-                else:
-                    return RVar.func[RVar.support.index(value)]
+                for i in range(len(RVar)):
+                    if RVar.support[i]==value:
+                        return RVar.func[i]
+                    if RVar.support[i]<value:
+                        if RVar.support[i+1]>value:
+                            return RVar.func[i]
         # If the distribution is a sf, find the cdf by reversing the function list
         if RVar.ftype[1] in ['sf','chf','hf']:
             X_dummy=SF(RVar)
@@ -375,10 +377,13 @@ def CDF(RVar,value=x):
             if value==x:
                 return Xsf
             if value!=x:
-                if value not in Xsf.support:
-                    return 0
-                else:
-                    return Xsf.func[Xsf.support.index(value)]
+                X_dummy=CDF(X_dummy)
+                for i in range(len(X_dummy.support)):
+                    if X_dummy.support[i]==value:
+                        return X_dummy.func[i]
+                    if X_dummy.support[i]<value:
+                        if X_dummy.support[i+1]>value:
+                            return X_dummy.func[i]
         # If the distribution is not a cdf or sf, find the pdf and then compute the cdf
         #   by summation
         else:
@@ -391,10 +396,13 @@ def CDF(RVar,value=x):
             if value==x:
                 return RV(cdffunc,X_dummy.support,['discrete','cdf'])
             if value!=x:
-                if value not in RVar.support:
-                    return 0
-                else:
-                    return cdffunc.func[RVar.support.index(value)]
+                X_dummy=CDF(X_dummy)
+                for i in range(len(X_dummy.support)):
+                    if X_dummy.support[i]==value:
+                        return X_dummy.func[i]
+                    if X_dummy.support[i]<value:
+                        if X_dummy.support[i+1]>value:
+                            return X_dummy.func[i]
                 
 
 def CHF(RVar,value=x):
@@ -775,10 +783,11 @@ def SF(RVar,value=x):
             if value==x:
                 return RVar
             else:
-                for i in range(len(RVar.support)):
-                    if value>=RVar.support[i] and value<=RVar.support[i+1]:
-                        sfvalue=RVar.func[i].subs(x,value)
-                        return simplify(sfvalue)
+                return 1-CDF(RVar,value)
+                #for i in range(len(RVar.support)):
+                #    if value>=RVar.support[i] and value<=RVar.support[i+1]:
+                #        sfvalue=RVar.func[i].subs(x,value)
+                #        return simplify(sfvalue)
         # If not, then use subtraction to find the sf
         else:
             X_dummy=CDF(RVar)
@@ -789,10 +798,11 @@ def SF(RVar,value=x):
             if value==x:
                 return RV(sflist,RVar.support,['continuous','sf'])
             if value!=x:
-                for i in range(len(X_dummy.support)):
-                    if value>=X_dummy.support[i] and value<=X_dummy.support[i+1]:
-                        sfvalue=sflist[i].subs(x,value)
-                        return simplify(sfvalue)
+                return 1-CDF(RVar,value)
+                #for i in range(len(X_dummy.support)):
+                #    if value>=X_dummy.support[i] and value<=X_dummy.support[i+1]:
+                #        sfvalue=sflist[i].subs(x,value)
+                #        return simplify(sfvalue)
 
     # If the distribution is discrete, find and return the sf of the random variable
     if RVar.ftype[0]=='discrete':
@@ -976,7 +986,7 @@ def MinimumIID(RVar,n):
         X_dummy=Minimum(X_dummy,X_dummy)
     return X_dummy
 
-def OrderStat(RVar,n,r):
+def OrderStat(RVar,n,r,replace='w'):
     """
     Procedure Name: OrderStat
     Purpose: Compute the distribution of the rth order statistic
@@ -1009,10 +1019,94 @@ def OrderStat(RVar,n,r):
             ordstat_func.append(ordfunc.simplify())
         # Return the distribution of the order statistic
         return RV(ordstat_func,RVar.support,['continuous','pdf'])
-            
-    
 
-                
+    # If the distribution is continuous, find and return the value of
+    #   the order statistic
+    if RVar.ftype[0]=='discrete':
+        #
+        # For discrete distributions:
+        #   1. Need to add support for symbolic discrete distributions
+        #   2. Need to add procedure that converts from dot form
+        #       to no-dot form
+        #   -- This will allow for the use of discrete distributions
+        #       such as the Poisson and Binomial distributions
+        #
+        if replace not in ['w','wo']:
+            raise RVError('Replace must be w or wo')
+        fx=PDF(RVar)
+        Fx=CDF(RVar)
+        Sx=SF(RVar)
+        N=len(fx.support)
+        # With replacement
+        if replace=='w':
+            # Numeric PDF
+            if type(RVar.func[0]) in [int,float]:
+                # If N is one, return the order stat
+                if N==1:
+                    return RV(1,RVar.support,['discrete','pdf'])
+                # Add the first term
+                else:
+                    OSproblist=[]
+                    os_sum=0
+                    for w in range(n-r+1):
+                        val=(binomial(n,w)*
+                             (fx.func[0]**(n-w))*
+                             (Sx.func[1]**(w)))
+                        os_sum+=val
+                    OSproblist.append(os_sum)
+                # Add term 2 through N-1
+                for k in range(2,N):
+                    os_sum=0
+                    for w in range(n-r+1):
+                        for u in range(r):
+                            val=(factorial(n)/
+                                 (factorial(u)*factorial(n-u-w)
+                                  *factorial(w))*
+                                 (Fx.func[k-2]**u)*
+                                 (fx.func[k-1]**(n-u-w))*
+                                 (Sx.func[k]**(w)))
+                            os_sum+=val
+                    OSproblist.append(os_sum)
+                # Add term N
+                os_sum=0
+                for u in range(r):
+                    val=(binomial(n,u)*
+                         (Fx.func[N-2]**u)*
+                         (fx.func[N-1]**(n-u)))
+                    os_sum+=val
+                OSproblist.append(os_sum)
+                return RV(OSproblist,RVar.support,['discrete','pdf'])
+
+        if replace=='wo':
+            # Create finite support flag
+            if RVar.support[len(RVar.support)-1]==oo or RVar.support[0]==-oo:
+                finite_supp=False
+            else:
+                finite_supp=True            
+            # With replacement
+            equal_prob=True
+            first_prob=RVar.func[0]
+            # If the discrete dist is not equiprobable,
+            #   identify is as such
+            for i in range(len(RVar.func)):
+                if RVar.func[i]!=first_prob:
+                    equal_prob=False
+            print equal_prob,finite_supp
+            # Equiprobable distribution, finite support
+            if equal_prob==True and finite_supp==True:
+                # For numeric r ... will need to add
+                #   support for symbolic r
+                if type(r) in [int,float]:
+                    OSproblist=[]
+                    for i in range(r,(N-n+r+1)):
+                        val=(binomial(i-1,r-1)*
+                             binomial(1,1)*
+                             binomial(N-i,n-r)/
+                             binomial(N,n))
+                        OSproblist.append(val)
+                    print OSproblist
+            # Add discrete/finite/wo/non-equiprobable
+
 def Transform(RVar,gXt):
     """
     Procedure Name: Transform
@@ -1939,48 +2033,3 @@ def PlotDisplay(plot_list,suplist=None):
     for i in range(len(plot_list)):
         PlotDist(plot_list[i],suplist,'display')
     plt.show()
-        
-                                         
-                                         
-        
-            
-                           
-            
-            
-                    
-            
-            
-                
-        
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
