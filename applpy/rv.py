@@ -847,8 +847,11 @@ def SF(RVar,value=x):
         else:
             X_dummy=CDF(RVar)
             newfunc=[]
-            for i in reversed(range(len(X_dummy.func))):
-                newfunc.append(X_dummy.func[i])
+            for i in range(len(X_dummy.func)):
+                if i==0:
+                    newfunc.append(0)
+                else:
+                    newfunc.append(1-X_dummy.func[i-1])
             Xsf=RV(newfunc,X_dummy.support,['discrete','sf'])
             if value==x:
                 return Xsf
@@ -971,7 +974,7 @@ def Mean(RVar):
 def MinimumIID(RVar,n):
     """
     Procedure Name: MinimumIID
-    Purpose: Comput the minimum of n iid random variables
+    Purpose: Compute the minimum of n iid random variables
     Arguments:  1. RVar: A random variable
                 2. n: an integer
     Output:     1. The minimum of n iid random variables
@@ -986,6 +989,85 @@ def MinimumIID(RVar,n):
         X_dummy=Minimum(X_dummy,X_dummy)
     return X_dummy
 
+def NextCombination(Previous,N):
+    """
+    Procedure Name: NextCombination
+    Purpose: Generates the next lexicographical combination of
+                size n. Designed for use in the OrderStat
+                procedure.
+    Arguments:  1. Previous: A list
+                2. N: A positive integer
+    Output:     1. The next combination
+    """
+    # Initialize the Next list
+    Next=[]
+    for i in range(len(Previous)):
+        Next.append(Previous[i])
+    n=len(Next)
+    # If the value in the final position of the combination is not the
+    #   maximum value it can attain, N, then increment it by 1
+    if Next[n-1]!=N:
+        Next[n-1]+=1
+    # If the final position in the combination is already at its maximum
+    #   value, then move left trhough the combination and find the next
+    #   possible value that can be incremented
+    else:
+        MoveLeft=True
+        for i in reversed(range(1,n)):
+            indx=i-1
+            if Next[indx]<N+i-n:
+                Next[indx]+=1
+                for j in range(1,(n-i+1)):
+                    Next[indx+j]=Next[(indx+j)-1]+1
+                MoveLeft=False
+            if MoveLeft==False:
+                break            
+    return(Next)
+
+def NextPermutation(Previous):
+    """
+    Procedure Name: NextPermutation
+    Purpose: Generate the next lexicographical permutation of
+                the given list. Designed for use in the OrderStat
+                procedure.
+    Arguments:  1. Previous: A list
+    Output:     1. The next permutation
+    """
+    # Initialize the Next list
+    Next=[]
+    Temp2=[]
+    for i in range(len(Previous)):
+        Next.append(Previous[i])
+        Temp2.append(None)
+    n=len(Previous)
+    flag=False
+
+    # Find the largest index value i for which Next[i]<Next[i+1]
+    for i in reversed(range(1,n)):
+        while flag==False:
+            indx=i-1
+            if Next[indx]<Next[indx+1]:
+                flag=True
+                OrigVal=Next[indx]
+                SwapIndex=indx+1
+            # Find the smallest value Next[j] for which Next[i]<Next[j]
+            #   and i<j
+            for j in reversed(range(SwapIndex,n)):
+                if Next[j]<Next[SwapIndex]:
+                    if Next[j]>OrigVal:
+                        SwapIndex=j
+            Temp1=Next[SwapIndex]
+            Swap=Next[indx]
+            Next[SwapIndex]=Swap
+            Next[indx]=Temp1
+            # Reverse the order of the values to the right of the leftmost
+            #   swapped value
+            for k in range(indx+1,n):
+                Temp2[k]=Next[k]
+            for m in range(indx+1,n):
+                Next[m]=Temp2[n+indx-m]
+    return(Next)
+            
 def OrderStat(RVar,n,r,replace='w'):
     """
     Procedure Name: OrderStat
@@ -1040,7 +1122,7 @@ def OrderStat(RVar,n,r,replace='w'):
         # With replacement
         if replace=='w':
             # Numeric PDF
-            if type(RVar.func[0]) in [int,float]:
+            if type(RVar.func[0])!=Symbol:
                 # If N is one, return the order stat
                 if N==1:
                     return RV(1,RVar.support,['discrete','pdf'])
@@ -1097,15 +1179,75 @@ def OrderStat(RVar,n,r,replace='w'):
                 # For numeric r ... will need to add
                 #   support for symbolic r
                 if type(r) in [int,float]:
-                    OSproblist=[]
+                    fxOS=[]
                     for i in range(r,(N-n+r+1)):
                         val=(binomial(i-1,r-1)*
                              binomial(1,1)*
                              binomial(N-i,n-r)/
                              binomial(N,n))
-                        OSproblist.append(val)
-                    print OSproblist
+                        fxOS.append(val)
+                    print fxOS
             # Add discrete/finite/wo/non-equiprobable
+            if equal_prob==False and finite_supp==True:
+                # If the rv has one element
+                if n==1:
+                    fxOS=[]
+                    for i in range(len(fx.func)):
+                        fxOS.append(fx.func[i])
+                # If n=N, the order stat is a list with 1 element
+                elif n==N:
+                    fxOS=[1]
+                # Otherwise, calculate the order stat by computing
+                #   an n-by-N array
+                else:
+                    # Create the null prob storage array
+                    ProbStorage=[]
+                    for i in range(n+1):
+                        N_list=[]
+                        for j in range(N+1):
+                            N_list.append(0)
+                        ProbStorage.append(N_list)
+                    # Create the first lexicographical combination
+                    #   of n items
+                    combo=range(1,n+1)
+                    end=binomial(N,n)
+                    for i in range(1,end+1):
+                        perm=[]
+                        for j in range(len(combo)):
+                            perm.append(combo[j])
+                        # Compute the probability of obtaining the given
+                        #   permutation, perm
+                        perm_end=factorial(n)
+                        for j in range(1,perm_end+1):
+                            PermProb=fx.func[perm[0]]
+                            cumsum=fx.func[perm[0]]
+                            for m in range(2,n+1):
+                                PermProb*=((fx.func[perm[m-1]])
+                                           /(1-cumsum))
+                                cumsum+=fx.func[perm[m-1]]
+                            # Order each permutation and determine
+                            #   which value sits in the rth ordered
+                            #   position. Store the permutation's
+                            #   probability in ProbStorage
+                            perm.sort()
+                            orderedperm=[]
+                            for m in range(len(perm)):
+                                orderedperm.append(perm[m])
+                            for m in range(n):
+                                for k in range(N):
+                                    if orderedperm[m]==k:
+                                        ProbStorage[m][k]=(PermProb+
+                                                          ProbStorage[m][k])
+                            # Find the next lexicographical permutation
+                            perm=NextPermutation(perm)
+                            # Find the next lexicographical combination
+                            combo=NextCombination(combo,N)
+                        fxOS=[]
+                        for m in range(r,(N-n+r+1)):
+                            fxOS.append(ProbStorage[r-1][m-1])
+                            
+            # Add infinite support algorithmsd
+            
 
 def Transform(RVar,gXt):
     """
