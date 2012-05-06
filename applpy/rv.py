@@ -1160,94 +1160,88 @@ def OrderStat(RVar,n,r,replace='w'):
                 return RV(OSproblist,RVar.support,['discrete','pdf'])
 
         if replace=='wo':
-            # Create finite support flag
-            if RVar.support[len(RVar.support)-1]==oo or RVar.support[0]==-oo:
-                finite_supp=False
-            else:
-                finite_supp=True            
-            # With replacement
-            equal_prob=True
-            first_prob=RVar.func[0]
-            # If the discrete dist is not equiprobable,
-            #   identify is as such
-            for i in range(len(RVar.func)):
-                if RVar.func[i]!=first_prob:
-                    equal_prob=False
-            print equal_prob,finite_supp
-            # Equiprobable distribution, finite support
-            if equal_prob==True and finite_supp==True:
-                # For numeric r ... will need to add
-                #   support for symbolic r
-                if type(r) in [int,float]:
-                    fxOS=[]
-                    for i in range(r,(N-n+r+1)):
-                        val=(binomial(i-1,r-1)*
-                             binomial(1,1)*
-                             binomial(N-i,n-r)/
-                             binomial(N,n))
-                        fxOS.append(val)
-                    print fxOS
-            # Add discrete/finite/wo/non-equiprobable
-            if equal_prob==False and finite_supp==True:
-                # If the rv has one element
+            if n>4:
+                print 'When sampling without replacement, n must be'
+                print 'less than 4'
+                raise RVError('n greater than 4')
+            # Determine if the PDF has equally likely probabilities
+            EqLike=True
+            for i in range(len(fx.func)):
+                if fx.func[0]!=fx.func[i]:
+                    EqLike=False
+                if EqLike==False:
+                    break
+            # Create blank order stat function list
+            fxOS=[]
+            for i in range(len(fx.func)):
+                fxOS.append(0)
+            # If the probabilities are equally likely
+            if EqLike==True:
+                # Need to add algorithm for symbolic 'r'
+                for i in range(r,(N-n+r+1)):
+                    indx=i-1
+                    val=((binomial(i-1,r-1)*
+                         binomial(1,1)*
+                         binomial(N-i,n-r))/
+                         (binomial(N,n)))
+                    fxOS[indx]=val
+                return RV(fxOS,fx.support,['discrete','pdf'])
+            # If the probabilities are not equally likely
+            elif EqLike==False:
+                # If the sample size is 1
                 if n==1:
                     fxOS=[]
                     for i in range(len(fx.func)):
                         fxOS.append(fx.func[i])
-                # If n=N, the order stat is a list with 1 element
+                    return(fxOS,fx.support,['discrete','pdf'])
                 elif n==N:
-                    fxOS=[1]
-                # Otherwise, calculate the order stat by computing
-                #   an n-by-N array
+                    fxOS[n-1]=1
+                    return RV(fxOS,fx.support,['discrete','pdf'])
                 else:
-                    # Create the null prob storage array
+                    # Create null ProbStorage array of size nXN
+                    # Initialize to contain all zeroes
+                    print n,N
                     ProbStorage=[]
-                    for i in range(n+1):
-                        N_list=[]
-                        for j in range(N+1):
-                            N_list.append(0)
-                        ProbStorage.append(N_list)
-                    # Create the first lexicographical combination
-                    #   of n items
+                    for i in range(n):
+                        row_list=[]
+                        for j in range(N):
+                            row_list.append(0)
+                        ProbStorage.append(row_list)
+                    # Create the first lexicographical combo of
+                    #   n items
                     combo=range(1,n+1)
-                    end=binomial(N,n)
-                    for i in range(1,end+1):
+                    for i in range(1,(binomial(N,n)+1)):
+                        # Assign perm as the current combo
                         perm=[]
                         for j in range(len(combo)):
                             perm.append(combo[j])
-                        # Compute the probability of obtaining the given
-                        #   permutation, perm
-                        perm_end=factorial(n)
-                        for j in range(1,perm_end+1):
+                        # Compute the probability of obtaining the
+                        #   given permutation
+                        for j in range(1,factorial(n)+1):
                             PermProb=fx.func[perm[0]]
                             cumsum=fx.func[perm[0]]
-                            for m in range(2,n+1):
-                                PermProb*=((fx.func[perm[m-1]])
-                                           /(1-cumsum))
-                                cumsum+=fx.func[perm[m-1]]
+                            for m in range(1,n):
+                                PermProb*=fx.func[perm[m]]/(1-cumsum)
+                                cumsum+=fx.func[perm[m]]
+                            print perm,PermProb,cumsum
                             # Order each permutation and determine
-                            #   which value sits in the rth ordered
-                            #   position. Store the permutation's
-                            #   probability in ProbStorage
-                            perm.sort()
+                            #   which value sits in the rth
+                            #   ordered position
                             orderedperm=[]
                             for m in range(len(perm)):
                                 orderedperm.append(perm[m])
+                            orderedperm.sort()
                             for m in range(n):
                                 for k in range(N):
-                                    if orderedperm[m]==k:
+                                    if orderedperm[m]==k+1:
                                         ProbStorage[m][k]=(PermProb+
-                                                          ProbStorage[m][k])
+                                                           ProbStorage[m][k])
                             # Find the next lexicographical permutation
                             perm=NextPermutation(perm)
-                            # Find the next lexicographical combination
-                            combo=NextCombination(combo,N)
-                        fxOS=[]
-                        for m in range(r,(N-n+r+1)):
-                            fxOS.append(ProbStorage[r-1][m-1])
+                        # Find the next lexicographical combination
+                        combo=NextCombination(combo,N)
                             
-            # Add infinite support algorithmsd
-            
+                            
 
 def Transform(RVar,gXt):
     """
@@ -1652,7 +1646,7 @@ def Maximum(RVar1,RVar2):
         for i in range(len(max_supp)):
             if max_supp[i]>=lowval:
                 max_supp2.append(max_supp[i])
-        # Compute the minimum function for each segment
+        # Compute the maximum function for each segment
         xindx=0
         yindx=0
         max_func=[]
@@ -1672,6 +1666,47 @@ def Maximum(RVar1,RVar2):
             max_func.append(Fmax)
         # Return the random variable
         return RV(max_func,max_supp2,['continuous','cdf'])
+    
+    # If the distributions are discrete, find and return
+    #   the maximum of the two rv's
+    if RVar1.ftype[0]=='discrete':
+        # Convert X and Y to their PDF representations
+        fx=PDF(RVar1)
+        fy=PDF(RVar2)
+        # Make a list of possible combinations of X and Y
+        combo_list=[]
+        for i in range(len(fx.support)):
+            for j in range(len(fy.support)):
+                combo_list.append([fx.support[i],fy.support[j]])
+        # Find the probability of obtaining each combination
+        prob_list=[]
+        for i in range(len(combo_list)):
+            val=PDF(fx,combo_list[i][0])*PDF(fy,combo_list[j][0])
+            prob_list.append(val)
+        # Find the min value for each combo
+        max_list=[]
+        for i in range(len(combo_list)):
+            max_list.append(max(combo_list[i][0],combo_list[i][1]))
+        # Compute the probability for each possible min
+        max_supp=[]
+        max_func=[]
+        for i in range(len(max_list)):
+            if max_list[i] not in max_supp:
+                max_supp.append(max_list[i])
+                max_func.append(prob_list[i])
+            else:
+                indx=max_supp.index(max_list[i])
+                max_func[indx]+=prob_list[i]
+        # Sort the elements of the rv
+        zip_list=zip(max_supp,max_func)
+        zip_list.sort()
+        max_supp=[]
+        max_func=[]
+        for i in range(len(zip_list)):
+            max_supp.append(zip_list[i][0])
+            max_func.append(zip_list[i][1])
+        # Return the minimum random variable
+        return RV(max_func,max_supp,['discrete','pdf'])
 
 def Minimum(RVar1,RVar2):
     """
@@ -1735,6 +1770,51 @@ def Minimum(RVar1,RVar2):
             min_func.append(Fmin)
         # Return the random variable
         return RV(min_func,min_supp2,['continuous','cdf'])
+
+    # If the distributions are discrete, find and return
+    #   the minimum of the two rv's
+    if RVar1.ftype[0]=='discrete':
+        # Convert X and Y to their PDF representations
+        fx=PDF(RVar1)
+        fy=PDF(RVar2)
+        # Make a list of possible combinations of X and Y
+        combo_list=[]
+        for i in range(len(fx.support)):
+            for j in range(len(fy.support)):
+                combo_list.append([fx.support[i],fy.support[j]])
+        # Find the probability of obtaining each combination
+        prob_list=[]
+        for i in range(len(combo_list)):
+            val=PDF(fx,combo_list[i][0])*PDF(fy,combo_list[j][0])
+            prob_list.append(val)
+        # Find the min value for each combo
+        min_list=[]
+        for i in range(len(combo_list)):
+            min_list.append(min(combo_list[i][0],combo_list[i][1]))
+        # Compute the probability for each possible min
+        min_supp=[]
+        min_func=[]
+        for i in range(len(min_list)):
+            if min_list[i] not in min_supp:
+                min_supp.append(min_list[i])
+                min_func.append(prob_list[i])
+            else:
+                indx=min_supp.index(min_list[i])
+                min_func[indx]+=prob_list[i]
+        # Sort the elements of the rv
+        zip_list=zip(min_supp,min_func)
+        zip_list.sort()
+        min_supp=[]
+        min_func=[]
+        for i in range(len(zip_list)):
+            min_supp.append(zip_list[i][0])
+            min_func.append(zip_list[i][1])
+        # Return the minimum random variable
+        return RV(min_func,min_supp,['discrete','pdf'])
+        
+            
+        
+        
 
 def Product(RVar1,RVar2):
     """
