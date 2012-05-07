@@ -892,13 +892,18 @@ Procedures on One Random Variable
 
 Procedures:
     1. ConvolutionIID(RVar,n)
-    2. MaximumIID(RVar,n)
-    3. Mean(RVar)
-    4. MinimumIID(RVar,n)
-    5. OrderStat(X,n,r)
-    6. Transform(RVar,gX)
-    7. Truncate(RVar,[lw,up])
-    8. Variance(RVar)
+    2. CoefOfVar(RVar)
+    3. ExpectedValue(RVar,gX)
+    4. Kurtosis(RVar)
+    5. MaximumIID(RVar,n)
+    6. Mean(RVar)
+    7. MGF(RVar)
+    8. MinimumIID(RVar,n)
+    9. OrderStat(RVar,n,r)
+    10. Skewness(RVar)
+    11. Transform(RVar,gX)
+    12. Truncate(RVar,[lw,up])
+    13. Variance(RVar)
 """
 
 def ConvolutionIID(RVar,n):
@@ -907,7 +912,7 @@ def ConvolutionIID(RVar,n):
     Purpose: Compute the convolution of n iid random variables
     Arguments:  1. RVar: A random variable
                 2. n: an integer
-    Output: The convolution of n iid random variables
+    Output:     1. The convolution of n iid random variables
     """
     # Check to make sure n is an integer
     if type(n)!=int:
@@ -918,6 +923,65 @@ def ConvolutionIID(RVar,n):
     for i in range(n-2):
         X_dummy+=X_dummy
     return X_dummy
+
+def CoefOfVar(RVar):
+    """
+    Procedure Name: CoefOfVar
+    Purpose: Compute the coefficient of variation of a random variable
+    Arguments:  1. RVar: A random variable
+    Output:     1. The coefficient of variation
+    """
+    # Compute the coefficient of varation
+    expect=Mean(RVar)
+    sig=Variance(RVar)
+    cov=(sqrt(sig))/expect
+    return cov
+
+def ExpectedValue(RVar,gX=x):
+    """
+    Procedure Name: ExpectedValue
+    Purpose: Computes the expected value of X
+    Arguments:  1. RVar: A random variable
+                2. gX: A transformation of x
+    Output:     1. E(gX)
+    """
+    # Conver the random variable to its PDF form
+    fx=PDF(RVar)
+    # If the distribution is continuous, compute the expected
+    #   value
+    if fx.ftype[0]=='continuous':
+        Expect=0
+        for i in range(len(fx.func)):
+            Expect+=integrate(gX*fx.func[i],
+                              (x,fx.support[i],fx.support[i+1]))
+        simplify(Expect)
+        return Expect
+
+    # If the distribution is discrete, compute the expected
+    #   value
+    if fx.ftype[0]=='discrete':
+        # Transform the random variable, and then use the
+        #   mean procedure to find the expected value
+        fx_trans=Transform(fx,[[gX],[-oo,oo]])
+        Expect=Mean(fx_trans)
+        return Expect
+
+def Kurtosis(RVar):
+    """
+    Procedure Name: Kurtosis
+    Purpose: Compute the Kurtosis of a random variable
+    Arguments:  1. RVar: A random variable
+    Output:     1. The kurtosis of a random variable
+    """
+    # Compute the kurtosis
+    expect=Mean(RVar)
+    sig=sqrt(Variance(RVar))
+    Term1=ExpectedValue(RVar,x**4)
+    Term2=4*expect*ExpectedValue(RVar,x**3)
+    Term3=6*(expect**2)*ExpectedValue(RVar,x**2)
+    Term4=3*expect**4
+    kurt=(Term1-Term2+Term3-Term4)/(sig**4)
+    return kurt
 
 def MaximumIID(RVar,n):
     """
@@ -970,6 +1034,17 @@ def Mean(RVar):
         for i in range(len(meanlist)):
             meanval+=meanlist[i]
         return meanval
+
+def MGF(RVar):
+    """
+    Procedure Name: MGF
+    Purpose: Compute the moment generating function of a random variable
+    Arguments:  1. RVar: A random variable
+    Output:     1. The moment generating function
+    """
+    mgf=ExpectedValue(RVar,exp(t*x))
+    mgf.simplify()
+    return mgf
 
 def MinimumIID(RVar,n):
     """
@@ -1240,7 +1315,22 @@ def OrderStat(RVar,n,r,replace='w'):
                             perm=NextPermutation(perm)
                         # Find the next lexicographical combination
                         combo=NextCombination(combo,N)
-                            
+
+def Skewness(RVar):
+    """
+    Procedure Name: Skewness
+    Purpose: Compute the skewness of a random variable
+    Arguments:  1. RVar: A random variable
+    Output:     1. The skewness of the random variable
+    """
+    # Compute the skewness
+    expect=Mean(RVar)
+    sig=sqrt(Variance(RVar))
+    Term1=ExpectedValue(RVar,x**3)
+    Term2=3*expect*ExpectedValue(RVar,x**2)
+    Term3=2*expect**3
+    skew=(Term1-Term2+Term3)/(sig**3)
+    return skew
                             
 
 def Transform(RVar,gXt):
@@ -1379,6 +1469,7 @@ def Transform(RVar,gXt):
 
     # If the distribution is discrete, find and return the transformation
     if RVar.ftype[0]=='discrete':
+        gX=gXt
         trans_sup=[]
         # Find the portion of the transformation each element
         #   in the random variable applies to, and then transform it
@@ -1525,7 +1616,8 @@ Procedures:
     1. Convolution(RVar1,RVar2)
     2. Maximum(RVar1,RVar2)
     3. Minimum(RVar1,RVar2)
-    4. Product(RVar1,RVar2)
+    4. Mixture(MixParameters,MixRVs)
+    5. Product(RVar1,RVar2)
 """
                     
 def Convolution(RVar1,RVar2):
@@ -1811,10 +1903,94 @@ def Minimum(RVar1,RVar2):
             min_func.append(zip_list[i][1])
         # Return the minimum random variable
         return RV(min_func,min_supp,['discrete','pdf'])
+
+def Mixture(MixParameters,MixRVs):
+    """
+    Procedure Name: Mixture
+    Purpose: Mixes random variables X1,X2,...,Xn
+    Arguments:   1. MixParameters: A mix of probability weights
+                 2. MixRVs: RV's X1,X2,...,Xn
+    Output:      1. The mixture RV
+    """
+
+    # Check to make sure that the arguments are lists
+    if type(MixParameters)!=list or type(MixRVs)!=list:
+        raise RVError('Both arguments must be in list format')
+    # Check to make sure the lists are of equal length
+    if len(MixParameters)!=len(MixRVs):
+        raise RVError('Mix parameter and RV lists must be the same length')
+    # Check to make sure that the mix parameters are numeric
+    # and sum to 1
+    total=0
+    for i in range(len(MixParameters)):
+        if type(MixParameters[i])==Symbol:
+            raise RVError('ApplPy does not support symbolic mixtures')
+        total+=MixParameters[i]
+    if total<.9999 or total>1.0001:
+        raise RVError('Mix parameters must sum to one')
+    # Check to ensure that the mix rv's are all of the same type
+    #   (discrete or continuous)
+    for i in range(len(MixRVs)):
+        if MixRVs[0].ftype[0]!=MixRVs[i].ftype[0]:
+            raise RVError('Mix RVs must be all continuous or discrete')
+    # Convert the Mix RVs to their PDF form
+    Mixfx=[]
+    for i in range(len(MixRVs)):
+        Mixfx.append(PDF(MixRVs[i]))
+
+    # If the distributions are continuous, find and return the
+    #   mixture pdf
+    if Mixfx[0].ftype[0]=='continuous':
+        # Compute the support of the mixture as the union of the supports
+        #   of the mix rvs
+        MixSupp=[]
+        for i in range(len(Mixfx)):
+            for j in range(len(Mixfx[i].support)):
+                if Mixfx[i].support[j] not in MixSupp:
+                    MixSupp.append(Mixfx[i].support[j])
+        MixSupp.sort()
+        # Compute and return the mixed PDF
+        fxnew=[]
+        for i in range(len(MixSupp)-1):
+            newMixfx=0
+            for j in range(len(MixParameters)):
+                m=len(Mixfx[j].support)-1
+                for k in range(m):
+                    if Mixfx[j].support[k]<=MixSupp[i]:
+                        if MixSupp[i+1]<=Mixfx[j].support[k+1]:
+                            buildfx=Mixfx[j].func[k]*MixParameters[j]
+                            newMixfx+=buildfx
+            simplify(newMixfx)
+            fxnew.append(newMixfx)
+        # Return the mixture rv
+        return RV(fxnew,MixSupp,['continuous','pdf'])
+
+    # If the distributions are discrete, find and return the
+    #   mixture pdf
+    if Mixfx[0].ftype[0]=='discrete':
+        # Compute the mixture rv by summing over the weights
+        MixSupp=[]
+        fxnew=[]
+        for i in range(len(Mixfx)):
+            for j in range(len(Mixfx[i].support)):
+                if Mixfx[i].support[j] not in MixSupp:
+                    MixSupp.append(Mixfx[i].support[j])
+                    fxnew.append(Mixfx[i].func[j]*MixParameters[i])
+                else:
+                    indx=MixSupp.index(Mixfx[i].support[j])
+                    val=Mixfx[i].func[j]*MixParameters[i]
+                    fxnew[indx]+=val
+        # Sort the values
+        zip_list=zip(MixSupp,fxnew)
+        zip_list.sort()
+        fxnew=[]
+        MixSupp=[]
+        for i in range(len(zip_list)):
+            fxnew.append(zip_list[i][1])
+            MixSupp.append(zip_list[i][0])
+        return RV(fxnew,MixSupp,['discrete','pdf'])
         
-            
-        
-        
+
 
 def Product(RVar1,RVar2):
     """
