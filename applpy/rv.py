@@ -7,7 +7,7 @@
 Main Random Variable Module
 
 Defines the random variable class
-Defines procedures for chaning functional form
+Defines procedures for changing functional form
 Defines procedures on one random variable
 Defines procudures on two random variables
 
@@ -900,10 +900,11 @@ Procedures:
     7. MGF(RVar)
     8. MinimumIID(RVar,n)
     9. OrderStat(RVar,n,r)
-    10. Skewness(RVar)
-    11. Transform(RVar,gX)
-    12. Truncate(RVar,[lw,up])
-    13. Variance(RVar)
+    10. ProductIID(RVar,n)
+    11. Skewness(RVar)
+    12. Transform(RVar,gX)
+    13. Truncate(RVar,[lw,up])
+    14. Variance(RVar)
 """
 
 def ConvolutionIID(RVar,n):
@@ -919,8 +920,8 @@ def ConvolutionIID(RVar,n):
         raise RVError('The second argument must be an integer')
 
     # Compute the iid convolution
-    X_dummy=RVar
-    for i in range(n-2):
+    X_dummy=PDF(RVar)
+    for i in range(n-1):
         X_dummy+=X_dummy
     return X_dummy
 
@@ -1315,6 +1316,24 @@ def OrderStat(RVar,n,r,replace='w'):
                             perm=NextPermutation(perm)
                         # Find the next lexicographical combination
                         combo=NextCombination(combo,N)
+
+def ProductIID(RVar,n):
+    """
+    Procedure Name: ProductIID
+    Purpose: Compute the product of n iid random variables
+    Arguments:  1. RVar: A random variable
+                2. n: an integer
+    Output:     1. The product of n iid random variables
+    """
+    # Check to make sure n is an integer
+    if type(n)!=int:
+        raise RVError('The second argument must be an integer')
+
+    # Compute the iid convolution
+    X_dummy=PDF(RVar)
+    for i in range(n-1):
+        X_dummy*=X_dummy
+    return X_dummy
 
 def Skewness(RVar):
     """
@@ -2040,6 +2059,8 @@ def Product(RVar1,RVar2):
         for i in range(len(X_dummy.support)):
             for j in range(len(Y_dummy.support)):
                 val=X_dummy.support[i]*Y_dummy.support[j]
+                if val==nan:
+                    val=0
                 if val not in vsupp:
                     vsupp.append(val)
         vsupp.sort()
@@ -2346,7 +2367,7 @@ Utilities
 
 Procedures:
     1. PlotDist(RVar,suplist)
-    2. PlotDist(plot_list,suplist)
+    2. PlotDisplay(plot_list,suplist)
 """
 
 def PlotDist(RVar,suplist=None,opt=None):
