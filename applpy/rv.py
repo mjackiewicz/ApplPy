@@ -1,6 +1,6 @@
 ######################################################################
 # ApplPy Software 2012 Matthew Robinson, Matthew Jackiewicz          #
-# Version 0.5, last updated 18 April 2012                            #
+# Version 0.5, last updated 13 May 2012                              #
 ######################################################################
 
 """
@@ -57,12 +57,16 @@ class RV:
         #   a list
         if isinstance(support,list)!=True:
             raise RVError('Support must be a list')
+        # Check to make sure that the random variable is either
+        #   discrete or continuous
+        if ftype[0] not in ['continuous','discrete','Discrete']:
+            raise RVError('Random variable must either be discrete or continuous')
         # Check to make sure that the support list has the correct
         #   length
         # The support list should be one element larger than the
         #   function list for continuous distributions, and the same
         #   size for discrete
-        if ftype[0]=='continuous':
+        if ftype[0] in ['continuous','Discrete']:
             if len(support)-len(func)!=1:
                 raise RVError('Support has incorrect number of elements')
         if ftype[0]=='discrete':
@@ -73,10 +77,6 @@ class RV:
         for i in range(len(support)-1):
             if support[i]>support[i+1]:
                 raise RVError('Support is not in ascending order')
-        # Check to make sure that the random variable is either
-        #   discrete or continuous
-        if ftype[0] not in ['continuous','discrete']:
-            raise RVError('Random variable must either be discrete or continuous')
         # Initialize the random variable
         self.func=func
         self.support=support
@@ -96,7 +96,7 @@ class RV:
         """
         Creates a default print setting for the random variable class
         """
-        if self.ftype[0]=='continuous':
+        if self.ftype[0] in ['continuous','Discrete']:
             print '%s %s with support %s:'%(self.ftype[0],self.ftype[1],self.support)
             return self.func
         if self.ftype[0]=='discrete':
@@ -257,6 +257,7 @@ Procedures:
     5. PDF(RVar,value)
     6. SF(RVar,value)
     7. BootstrapRV(varlist)
+    8. Convert(RVar,inc)
 """
 
 def check_value(value,sup):
@@ -886,6 +887,35 @@ def BootstrapRV(varlist):
     # Return the result as a discrete random variable
     return RV(funclist,supplist,['discrete','pdf'])
 
+def Convert(RVar,inc=1):
+    """
+    Procedure Name: Convert
+    Purpose: Convert a discrete random variable from functional to explicit form
+    Arguments:  1. RVar: A functional discrete random variable
+                2. inc: An increment value
+    Output:     1. A discrete random variable in explicit form
+    """
+    # If the random variable is not in functional form, return
+    #   an error
+    if RVar.ftype[0]!='Discrete':
+        raise RVError('The random variable must be Discrete')
+    # If the rv has infinite support, return an error
+    if (oo or -oo) in RVar.support:
+        raise RVError('Convert does not work for infinite support')
+    # Create the support of explicit discrete rv
+    i=RVar.support[0]
+    discrete_supp=[]
+    while i<=RVar.support[1]:
+        discrete_supp.append(i)
+        i+=inc
+    # Create the function values for the explicit rv
+    discrete_func=[]
+    for i in range(len(discrete_supp)):
+        val=RVar.func[0].subs(x,discrete_supp[i])
+        discrete_func.append(val)
+    # Return the random variable in discrete form
+    return RV(discrete_func,discrete_supp,
+              ['discrete',RVar.ftype[1]])
 
 """
 Procedures on One Random Variable
@@ -1662,7 +1692,7 @@ def Convolution(RVar1,RVar2):
     if RVar1.ftype[0]=='continuous':
         # If the two distributions are both lifetime distributions, treat
         #   as a special case
-        if RVar1.support==[0,oo] and RVar2.support==[0,oo] and len(RVar1.func)==1 and len(RVar2.func)==1:
+        if RVar1.support==[0,oo] and RVar2.support==[0,oo]:
             func1=X1_dummy.func[0]
             func2=X2_dummy.func[0].subs(x,z-x)
             conv=integrate(func1*func2,(x,0,z))
@@ -2020,10 +2050,6 @@ def Product(RVar1,RVar2):
                 2. RVar2: A random variable
     Output:     1. The product of RVar1 and RVar2        
     """
-    #
-    # Needs further debugging, as well as quadrants II,III,IV 
-    #
-    
     # If the random variable is continuous, find and return the
     #   product of the two random variables
     if RVar1.ftype[0]=='continuous':
@@ -2418,7 +2444,6 @@ def PlotDist(RVar,suplist=None,opt=None):
                         plot_sup.append(float(RVar.support[i]))
         if suplist[1]<RVar.support[len(RVar.support)-1]:
             plot_sup.append(float(suplist[1]))
-        print plot_sup
         # Create a list of functions for the plot
         for i in range(len(RVar.func)):
             if suplist[0]>=RVar.support[i]:
@@ -2438,17 +2463,22 @@ def PlotDist(RVar,suplist=None,opt=None):
             if i>lwindx and i<upindx:
                 plot_sup.append(RVar.support[i])
         plot_sup.append(suplist[1])
-        print plot_func
+        print plot_sup
+        if opt!='display':
+            plt.ion()
         plt.mat_plot(plot_func,plot_sup,lab1,lab2,'continuous')
-        if opt!='display':
-            plt.show()
+        #if opt!='display':
+            #plt.show()
     if RVar.ftype[0]=='discrete':
-        plt.mat_plot(RVar.func,RVar.support,lab1,lab2,'discrete')
         if opt!='display':
-            plt.show()    
+            plt.ion()
+        plt.mat_plot(RVar.func,RVar.support,lab1,lab2,'discrete')
+        #if opt!='display':
+            #plt.show()    
 
 def PlotDisplay(plot_list,suplist=None):
+    plt.ion()
     # Create a plot of each random variable in the plot list
     for i in range(len(plot_list)):
         PlotDist(plot_list[i],suplist,'display')
-    plt.show()
+    #plt.show()

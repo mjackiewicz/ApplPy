@@ -9,6 +9,7 @@ Main ApplPy Module
 Imports supporting ApplPy Modules
 
 """
+from __future__ import division
 from rv import *
 from dist_type import *
 from stats import *
@@ -35,6 +36,7 @@ def Menu():
     print 'Functional Form Conversion'
     print 'CDF(X,{x}),CHF(X,{x}),HF(X,{x}),IDF(X,{x})'
     print 'PDF(X,{x}),SF(X,{x}),BootstrapRV([data])'
+    print 'Convert(X,{x})'
     print ""    
 
     print 'Procedures on One Random Variable'
@@ -65,5 +67,8 @@ def Menu():
     print 'LomaxRV(kappa,theta),MuthRV(kappa),NormalRV(mu,sigma)'
     print 'ParetoRV(theta,kappa),RayleighRV(theta),TriangularRV(a,b,c)'
     print 'TRV(N),UniformRV(a,b),WeibullRV(theta,kappa)'
-    
-    
+    print ""
+
+    print 'Discrete Distributions'
+    print 'BenfordRV(),BinomialRV(n,p),GeometricRV(p),PoissonRV(theta)'
+

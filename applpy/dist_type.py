@@ -20,6 +20,11 @@ def param_check(param):
         else:
             return True
 
+"""
+Continuous Distributions
+
+"""
+
 class BetaRV(RV):
     def __init__(self,alpha=Symbol('alpha',positive=True),
                  beta=Symbol('beta'),positive=True):
@@ -415,4 +420,41 @@ class WeibullRV(RV):
             varlist.append(var)
         varlist.sort()
         return varlist
+
+"""
+Discrete Distributions
+
+"""
+
+class BenfordRV(RV):
+    def __init__(self):
+        X_dummy=RV([(ln((1/x)+1))/(ln(10))],[1,9],['Discrete','pdf'])
+        self.func=X_dummy.func
+        self.support=X_dummy.support
+        self.ftype=X_dummy.ftype
+
+class BinomialRV(RV):
+    def __init__(self,N=Symbol('N',positive=True),
+                 p=Symbol('p',positive=True)):
+        X_dummy=RV([(factorial(n)*p**(x)*(1-p)**(n-x))/
+                    (factorial(n-x)*factorial(x))],[0,n],
+                   ['Discrete','pdf'])
+        self.func=X_dummy.func
+        self.support=X_dummy.support
+        self.ftype=X_dummy.ftype
+
+class GeometricRV(RV):
+    def __init__(self,p=Symbol('p',positive=True)):
+        X_dummy=RV([p*(1-p)**(x-1)],[1,oo],['Discrete','pdf'])
+        self.func=X_dummy.func
+        self.support=X_dummy.support
+        self.ftype=X_dummy.ftype
+
+class PoissonRV(RV):
+    def __init__(self,theta=Symbol('theta',positive=True)):
+        X_dummy=RV([(theta**(x)*exp(-theta))/factorial(x)],
+                   [0,oo],['Discrete','pdf'])
+        self.func=X_dummy.func
+        self.support=X_dummy.support
+        self.ftype=X_dummy.ftype
 

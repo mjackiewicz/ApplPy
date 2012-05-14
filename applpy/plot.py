@@ -1,6 +1,6 @@
 ######################################################################
 # ApplPy Software 2012 Matthew Robinson, Matthew Jackiewicz          #
-# Version 0.5, last updated 18 April 2012                            #
+# Version 0.5, last updated 13 May 2012                              #
 ######################################################################
 
 """
@@ -11,7 +11,6 @@ Defines procedures for plotting random variables
 """
 
 from pylab import *
-#from pylab import arange,plot,xlabel,ylabel,title,grid,exp,log,sqrt
 
 def mat_plot(funclist,suplist,lab1=None,lab2=None,ftype='continuous'):
     """
