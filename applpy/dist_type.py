@@ -436,8 +436,8 @@ class BenfordRV(RV):
 class BinomialRV(RV):
     def __init__(self,N=Symbol('N',positive=True),
                  p=Symbol('p',positive=True)):
-        X_dummy=RV([(factorial(n)*p**(x)*(1-p)**(n-x))/
-                    (factorial(n-x)*factorial(x))],[0,n],
+        X_dummy=RV([(factorial(N)*p**(x)*(1-p)**(N-x))/
+                    (factorial(N-x)*factorial(x))],[0,N],
                    ['Discrete','pdf'])
         self.func=X_dummy.func
         self.support=X_dummy.support

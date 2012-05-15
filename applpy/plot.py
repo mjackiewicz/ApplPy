@@ -10,7 +10,12 @@ Defines procedures for plotting random variables
 
 """
 
-from pylab import *
+try:
+    from pylab import *
+except:
+    print 'WARNING: Plotting not currently enabled'
+    print 'Download matplotlib to enable plotting.'
+    print ''
 
 def mat_plot(funclist,suplist,lab1=None,lab2=None,ftype='continuous'):
     """

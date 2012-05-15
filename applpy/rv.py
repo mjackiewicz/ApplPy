@@ -92,13 +92,39 @@ class RV:
         4. __add__(self,other)
     """
 
-    def display(self):
+    def display(self,opt=None):
         """
         Creates a default print setting for the random variable class
         """
         if self.ftype[0] in ['continuous','Discrete']:
-            print '%s %s with support %s:'%(self.ftype[0],self.ftype[1],self.support)
-            return self.func
+            piece_list=[]
+            for i in range(len(self.func)):
+                f=self.func[i]
+                sup='x>=%s'%(self.support[i])
+                tup=(f,eval(sup))
+                piece_list.append(tup)
+            piece_list.append((0,True))
+            piece_input='Piecewise('+str(piece_list)+')'
+            piece2=piece_input.replace(piece_input[10],'')
+            n=len(piece2)-2
+            piece3=piece2.replace(piece2[n],'')
+            theta=Symbol('theta');kappa=Symbol('kappa');
+            a=Symbol('a');b=Symbol('b');c=Symbol('c');
+            p=Symbol('p');N=Symbol('N');alpha=Symbol('alpha')
+            beta=Symbol('beta');mu=Symbol('mu');sigma=Symbol('sigma')
+            try:
+                p=eval(piece3)
+                print '%s %s with support %s:'%(self.ftype[0],
+                                                self.ftype[1],self.support)
+                if opt=='repr':
+                    return self.func
+                else:
+                    return p
+            except:
+                print '%s %s with support %s:'%(self.ftype[0],
+                                                self.ftype[1],self.support)
+                return self.func
+            
         if self.ftype[0]=='discrete':
             print '%s %s where {x->f(x)}:'%(self.ftype[0],self.ftype[1])
             for i in range(len(self.support)):
@@ -111,7 +137,7 @@ class RV:
         """
         Sets the default string display setting for the random variable class
         """
-        return repr(self.display())
+        return repr(self.display(opt='repr'))
 
     def __len__(self):
         """
