@@ -60,7 +60,9 @@ class RV:
         # Check to make sure that the random variable is either
         #   discrete or continuous
         if ftype[0] not in ['continuous','discrete','Discrete']:
-            raise RVError('Random variable must either be discrete or continuous')
+            string='Random variables must either be discrete'
+            string+=' or continuous'
+            raise RVError(string)
         # Check to make sure that the support list has the correct
         #   length
         # The support list should be one element larger than the
@@ -68,10 +70,12 @@ class RV:
         #   size for discrete
         if ftype[0] in ['continuous','Discrete']:
             if len(support)-len(func)!=1:
-                raise RVError('Support has incorrect number of elements')
+                string='Support has incorrect number of elements'
+                raise RVError(string)
         if ftype[0]=='discrete':
             if len(support)-len(func)!=0:
-                raise RVError('Support has incorrect number of elements')
+                string='Support has incorrect number of elements'
+                raise RVError(string)
         # Check to make sure that the elements of the support list are
         #   in ascending order
         for i in range(len(support)-1):
@@ -97,6 +101,7 @@ class RV:
         Creates a default print setting for the random variable class
         """
         if self.ftype[0] in ['continuous','Discrete']:
+            # Generate the pieces of the piecewise function
             piece_list=[]
             for i in range(len(self.func)):
                 f=self.func[i]
@@ -108,6 +113,8 @@ class RV:
             piece2=piece_input.replace(piece_input[10],'')
             n=len(piece2)-2
             piece3=piece2.replace(piece2[n],'')
+            # Create symbols for use in the piecewise
+            #   function display
             theta=Symbol('theta');kappa=Symbol('kappa');
             a=Symbol('a');b=Symbol('b');c=Symbol('c');
             p=Symbol('p');N=Symbol('N');alpha=Symbol('alpha')
@@ -115,34 +122,40 @@ class RV:
             try:
                 p=eval(piece3)
                 print '%s %s with support %s:'%(self.ftype[0],
-                                                self.ftype[1],self.support)
+                                                self.ftype[1],
+                                                self.support)
                 if opt=='repr':
                     return self.func
                 else:
                     return p
             except:
                 print '%s %s with support %s:'%(self.ftype[0],
-                                                self.ftype[1],self.support)
+                                                self.ftype[1],
+                                                self.support)
                 return self.func
             
         if self.ftype[0]=='discrete':
-            print '%s %s where {x->f(x)}:'%(self.ftype[0],self.ftype[1])
+            print '%s %s where {x->f(x)}:'%(self.ftype[0],
+                                            self.ftype[1])
             for i in range(len(self.support)):
                 if i!=(len(self.support)-1):
-                    print '{%s -> %s}, '%(self.support[i],self.func[i]),
+                    print '{%s -> %s}, '%(self.support[i],
+                                          self.func[i]),
                 else:
-                    print '{%s -> %s}'%(self.support[i],self.func[i])
+                    print '{%s -> %s}'%(self.support[i],
+                                        self.func[i])
 
     def __repr__(self):
         """
-        Sets the default string display setting for the random variable class
+        Sets the default string display setting for the random
+        variable class
         """
         return repr(self.display(opt='repr'))
 
     def __len__(self):
         """
-        Sets the behavior for the len() procedure when an instance of the
-            random variable class is given as input
+        Sets the behavior for the len() procedure when an instance
+            of the random variable class is given as input
         """
         return len(self.func)
 
@@ -172,13 +185,9 @@ class RV:
         """
         Sets the behavior of the '/' operator
         """
-        gX=[[1/x],[-oo,oo]]
+        gX=[[1/x,1/x],[-oo,0,oo]]
         RVar=Transform(other,gX)
         return Product(self,RVar)
-
-        # To add later:
-        #   1. self.__getitem__() / self.__delitem__ for use in dictionaries
-        #   2. self.__cmp__() to allow for comparison of two random variables
 
     """
     Utility Methods
@@ -202,19 +211,21 @@ class RV:
                                                X_dummy.support[i+1]))
                 area+=val
             print 'The area under f(x) is: %s'%(area)
-            
-            # Check to ensure that the PDF is positive over the entire support of the PDF
-            #print 'Now checking for absolute value...'
-
-            # Need an algorithm to check the function for non-negative
-            # integrate command does not seem to work for functions like Abs(x**2)
-            # finding max of function may be best bet, no max function
-            # Could use numerical maximization procedure coded in APPLBayes for Maple            
-
+            # Check absolute value
+            print 'Now checking for absolute value...'
+            abs_flag=True
+            val_list=[]
+            quant_list=[.1,.2,.3,.4,.5,.6,.7,.8,.9]
+            for i in range(len(quant_list)):
+                val=self.variate(s=quant_list[i])[0]
+                val_list.append(val)
+            for i in range(len(val_list)):
+                if val_list[i]<0:
+                    abs_flag=False
             print 'The pdf of the random variable:'
             print '%s'%(X_dummy.func)
             print 'continuous pdf with support %s'%(X_dummy.support)
-            if area>.9999 and area<1.00001:
+            if area>.9999 and area<1.00001 and abs_flag==True:
                 print 'is valid'
             else:
                 print 'is not valid'
@@ -227,8 +238,14 @@ class RV:
             for i in range(len(self.support)):
                 area+=self.func[i]
             print 'The area under f(x) is: %s'%(area)
+            # Check for absolute value
+            print 'Now checking for absolute value...'
+            abs_flag=True
+            for i in range(len(self.func)):
+                if self.func[i]<0:
+                    abs_flag=False
             print 'The pdf of the random variable'
-            if area>.9999 and area<1.0001:
+            if area>.9999 and area<1.0001 and abs_flag==True:
                 print 'is valid'
             else:
                 print 'is not valid'
@@ -238,8 +255,8 @@ class RV:
         Generates a list of n random variates from the random variable
             using the Newton-Raphson Method
         """   
-        # Find the cdf and pdf functions (to avoid integrating for each
-        #   variate
+        # Find the cdf and pdf functions (to avoid integrating for
+            # each variate
         cdf=CDF(self)
         pdf=PDF(self)
         mean=Mean(self)
@@ -254,10 +271,13 @@ class RV:
             for i in range(10):
                 try:
                     if len(self.func)==1:
-                        guess=(guess-((cdf.func[0].subs(x,guess)-val)/
-                                     pdf.func[0].subs(x,guess))).evalf()
+                        guess=(guess-
+                               ((cdf.func[0].subs(x,guess)-val)/
+                                     pdf.func[0].subs(x,guess)))
+                        guess=guess.evalf()
                     else:
-                        guess=(guess-((CDF(cdf,guess)-val)/PDF(pdf,guess))).evalf()
+                        guess=(guess-((CDF(cdf,guess)-val)/
+                                      PDF(pdf,guess))).evalf()
                 except:
                     if guess>self.support[len(self.support)-1]:
                         cfunc=cdf.func[len(self.func)-1].subs(x,guess)
@@ -290,8 +310,8 @@ def check_value(value,sup):
     # Not intended for use by end user
     """
     Procedure Name: check_value
-    Purpose: Check to see if a value passed to CDF,CHF,HF,PDF or SF is in the
-                support of the random variable
+    Purpose: Check to see if a value passed to CDF,CHF,HF,PDF or
+                SF is in the support of the random variable
     Arguments:  1. value: The value passed to RV procedure
                 2. sup: The support of the RV in the procedure
     Output:     1. True if the value given is within the support
@@ -311,19 +331,23 @@ def CDF(RVar,value=x):
     Procedure Name: CDF
     Purpose: Compute the cdf of a random variable
     Arguments:  1. RVar: A random variable
-                2. value: An integer or floating point number (optional)
+                2. value: An integer or floating point number
     Output:     1. CDF of a random variable (if value not specified)
-                2. Value of the CDF at a given point (if value is specified)
+                2. Value of the CDF at a given point
+                    (if value is specified)
     """
 
-    # Check to make sure the value given is within the random variable's support
+    # Check to make sure the value given is within the random
+    #   variable's support
     if check_value(value,RVar.support)!=True:
-        raise RVError('Value is not within the support of the random variable')
+        string='Value is not within the support of the random variable'        
+        raise RVError(string)
 
     # If the distribution is continous, find and return the distribution
     #   of the random variable
     if RVar.ftype[0]=='continuous':
-        # If the random variable is already a cdf, nothing needs to be done
+        # If the random variable is already a cdf, nothing needs to
+        #   be done
         if RVar.ftype[1]=='cdf':
             if value==x:
                 return RVar
@@ -332,8 +356,8 @@ def CDF(RVar,value=x):
                     if value>=RVar.support[i] and value<=RVar.support[i+1]:
                         cdfvalue=RVar.func[i].subs(x,value)
                         return simplify(cdfvalue)
-        # If the random variable is a sf, find and return the cdf of the random
-        #   variable
+        # If the random variable is a sf, find and return the cdf of the
+        #   random variable
         if RVar.ftype[0]=='sf':
             X_dummy=SF(RVar)
             # Compute the sf for each segment
@@ -349,9 +373,9 @@ def CDF(RVar,value=x):
                     if value>=X_dummy.support[i] and value<=X_dummy.support[i+1]:
                         cdfvalue=cdflist[i].subs(x,value)
                         return simplify(cdfvalue)
-        # If the random variable is not a cdf or sf, compute the pdf of the random
-        #   variable, and then compute the cdf by integrating over each
-        #   segment of the random variable
+        # If the random variable is not a cdf or sf, compute the pdf of
+        #   the random variable, and then compute the cdf by integrating
+        #   over each segment of the random variable
         else:
             X_dummy=PDF(RVar)
             # Substitue the dummy variable 't' into the dummy rv
@@ -365,7 +389,8 @@ def CDF(RVar,value=x):
                 cdffunc=integrate(funclist[i],(t,X_dummy.support[i],x))
                 # Adjust the constant of integration
                 if i!=0:
-                    const=cdflist[i-1].subs(x,X_dummy.support[i])-cdffunc.subs(x,X_dummy.support[i])
+                    const=(cdflist[i-1].subs(x,X_dummy.support[i])-
+                    cdffunc.subs(x,X_dummy.support[i]))
                     cdffunc=cdffunc+const
                 if i==0:
                     const=0-cdffunc.subs(x,X_dummy.support[i])
@@ -381,9 +406,11 @@ def CDF(RVar,value=x):
                         cdfvalue=cdflist[i].subs(x,value)
                         return simplify(cdfvalue)
                     
-    # If the distribution is discrete, find and return the cdf of the random variable
+    # If the distribution is discrete, find and return the cdf of
+    #   the random variable
     if RVar.ftype[0]=='discrete':
-        # If the distribution is already a cdf, nothing needs to be done
+        # If the distribution is already a cdf, nothing needs to
+        #   be done
         if RVar.ftype[1]=='cdf':
             if value==x:
                 return RVar
@@ -394,7 +421,8 @@ def CDF(RVar,value=x):
                     if RVar.support[i]<value:
                         if RVar.support[i+1]>value:
                             return RVar.func[i]
-        # If the distribution is a sf, find the cdf by reversing the function list
+        # If the distribution is a sf, find the cdf by reversing the
+        #   function list
         if RVar.ftype[1] in ['sf','chf','hf']:
             X_dummy=SF(RVar)
             newfunc=[]
@@ -411,8 +439,8 @@ def CDF(RVar,value=x):
                     if X_dummy.support[i]<value:
                         if X_dummy.support[i+1]>value:
                             return X_dummy.func[i]
-        # If the distribution is not a cdf or sf, find the pdf and then compute the cdf
-        #   by summation
+        # If the distribution is not a cdf or sf, find the pdf and
+        #   then compute the cdf by summation
         else:
             X_dummy=PDF(RVar)
             cdffunc=[]
@@ -437,26 +465,32 @@ def CHF(RVar,value=x):
     Procedure Name: CHF
     Purpose: Compute the chf of a random variable
     Arguments:  1. RVar: A random variable
-                2. value: An integer or floating point number (optional)
+                2. value: An integer or floating point number
+                    (optional)
     Output:     1. CHF of a random variable (if value not specified)
-                2. Value of the CHF at a given point (if value is specified)
+                2. Value of the CHF at a given point
+                    (if value is specified)
     """
     
     # Check to make sure the value given is within the random variable's support
     if check_value(value,RVar.support)!=True:
-        raise RVError('Value is not within the support of the random variable')
+        string='Value is not within the support of the random variable'        
+        raise RVError(string)
 
-    # If the distribution is continuous, find and return the chf of the random variable
+    # If the distribution is continuous, find and return the chf of
+    #   the random variable
     if RVar.ftype[0]=='continuous':
-        # If the distribution is already a chf, nothing needs to be done
+        # If the distribution is already a chf, nothing needs to
+        #   be done
         if RVar.ftype[1]=='chf':
             if value==x:
                 return RVar
             if value!=x:
                 for i in range(len(RVar.support)):
-                    if value>=RVar.support[i] and value<=RVar.support[i+1]:
-                        chfvalue=RVar.func[i].subs(x,value)
-                        return simplify(chfvalue)
+                    if value>=RVar.support[i]:
+                        if value<=RVar.support[i+1]:
+                            chfvalue=RVar.func[i].subs(x,value)
+                            return simplify(chfvalue)
         # Otherwise, find and return the chf
         else:
             X_dummy=SF(RVar)
@@ -469,18 +503,21 @@ def CHF(RVar,value=x):
             for i in range(len(sflist)):
                 newfunc=-ln(sflist[i])
                 chffunc.append(simplify(newfunc))
-            # If a value is not specified, return the chf of the random variable
+            # If a value is not specified, return the chf of the
+            #   random variable
             if value==x:
                 return RV(chffunc,X_dummy.support,['continuous','chf'])
             if value!=x:
                 for i in range(len(RVar.support)):
-                    if value>=RVar.func[i] and value<=RVar.support[i+1]:
-                        chfvalue=chffunc[i].subs(x,value)
-                        return simplify(chfvalue)
+                    if value>=RVar.func[i]:
+                        if value<=RVar.support[i+1]:
+                            chfvalue=chffunc[i].subs(x,value)
+                            return simplify(chfvalue)
                     
     # If the random variable is discrete, find and return the chf
     if RVar.ftype[0]=='discrete':
-        # If the distribution is already a chf, nothing needs to be done
+        # If the distribution is already a chf, nothing needs to
+        #   be done
         if RVar.ftype[1]=='chf':
             if value==x:
                 return RVar
@@ -509,27 +546,35 @@ def HF(RVar,value=x):
     Procedure Name: HF
     Purpose: Compute the hf of a random variable
     Arguments:  1. RVar: A random variable
-                2. value: An integer or floating point number (optional)
+                2. value: An integer or floating point number
+                    (optional)
     Output:     1. HF of a random variable (if value not specified)
-                2. Value of the HF at a given point (if value is specified)
+                2. Value of the HF at a given point
+                    (if value is specified)
     """
     
-    # Check to make sure the value given is within the random variable's support
+    # Check to make sure the value given is within the random
+    #   variable's support
     if check_value(value,RVar.support)!=True:
-        raise RVError('Value is not within the support of the random variable')
+        string='Value is not within the support of the random variable'
+        raise RVError(string)
 
-    # If the distribution is continuous, find and return the hf of the random variable
+    # If the distribution is continuous, find and return the hf of
+    #   the random variable
     if RVar.ftype[0]=='continuous':
-        # If the distribution is already a hf, nothing needs to be done
+        # If the distribution is already a hf, nothing needs to be
+        #   done
         if RVar.ftype[1]=='hf':
             if value==x:
                 return RVar
             if value!=x:
                 for i in range(len(RVar.support)):
-                    if value>=RVar.support[i] and value<=RVar.support[i+1]:
-                        hfvalue=RVar.func[i].subs(x,value)
-                        return simplify(hfvalue)
-        # If the distribution is in chf form, use differentiation to find the hf
+                    if value>=RVar.support[i]:
+                        if value<=RVar.support[i+1]:
+                            hfvalue=RVar.func[i].subs(x,value)
+                            return simplify(hfvalue)
+        # If the distribution is in chf form, use differentiation
+        #   to find the hf
         if RVar.ftype[1]=='chf':
             X_dummy=CHF(RVar)
             # Generate a list of hf functions
@@ -541,9 +586,10 @@ def HF(RVar,value=x):
                 return RV(hflist,X_dummy.support,['continuous','hf'])
             if value!=x:
                 for i in range(len(RVar.support)):
-                    if value>=RVar.support[i] and value<=RVar.support[i+1]:
-                        hfvalue=hflist[i].subs(x,value)
-                        return simplify(hfvalue)
+                    if value>=RVar.support[i]:
+                        if value<=RVar.support[i+1]:
+                            hfvalue=hflist[i].subs(x,value)
+                            return simplify(hfvalue)
         # In all other cases, use the pdf and the sf to find the hf
         else:
             X_pdf=PDF(RVar).func
@@ -557,13 +603,15 @@ def HF(RVar,value=x):
                 return RV(hflist,RVar.support,['continuous','hf'])
             if value!=x:
                 for i in range(len(RVar.support)):
-                    if value>=RVar.support[i] and value<=RVar.support[i+1]:
-                        hfvalue=hflist[i].subs(x,value)
-                        return simplify(hfvalue)
+                    if value>=RVar.support[i]:
+                        if value<=RVar.support[i+1]:
+                            hfvalue=hflist[i].subs(x,value)
+                            return simplify(hfvalue)
 
     # If the random variable is discrete, find and return the hf
     if RVar.ftype[0]=='discrete':
-        # If the distribution is already a hf, nothing needs to be done
+        # If the distribution is already a hf, nothing needs
+        #   to be done
         if RVar.ftype[1]=='hf':
             if value==x:
                 return RVar
@@ -593,16 +641,19 @@ def IDF(RVar,value=x):
     Procedure Name: IDF
     Purpose: Compute the idf of a random variable
     Arguments:  1. RVar: A random variable
-                2. value: An integer or floating point number (optional)
+                2. value: An integer or floating point number
+                    (optional)
     Output:     1. IDF of a random variable (if value not specified)
-                2. Value of the IDF at a given point (if value is specified)
+                2. Value of the IDF at a given point
+                    (if value is specified)
     """
     
     # Check to make sure the percentile given is between 0 and 1
     if check_value(value,[0,1])!=True:
-        raise RVError('Value is not within the support of the random variable')
-
-    # If the distribution is continuous, find and return the idf of the random variable
+        string='Value is not within the support of the random variable'
+        return RVError(string)
+    # If the distribution is continuous, find and return the idf
+    #   of the random variable
     if RVar.ftype[0]=='continuous':
         if value==x:
             if RVar.ftype[1]=='idf':
@@ -619,7 +670,8 @@ def IDF(RVar,value=x):
                 elif X_dummy.support[i]!=-oo and X_dummy.support[i+1]==oo:
                     check.append(X_dummy.support[i]+1)
                 else:
-                    check.append((X_dummy.support[i]+X_dummy.support[i+1])/2)
+                    check.append((X_dummy.support[i]+
+                                  X_dummy.support[i+1])/2)
             # Use solve to create a list of candidate inverse functions
             # Check to see which of the candidate inverse functions is correct
             idffunc=[]
@@ -643,8 +695,13 @@ def IDF(RVar,value=x):
             idfsup=[]
             for i in range(len(X_dummy.support)):
                 idfsup.append(CDF(X_dummy,X_dummy.support[i]))
+            # Replace t with x
+            idffunc2=[]
+            for i in range(len(idffunc)):
+                func=idffunc[i].subs(t,x)
+                idffunc2.append(simplify(func))
             # Return the IDF
-            return RV(idffunc,idfsup,['continuous','idf'])
+            return RV(idffunc2,idfsup,['continuous','idf'])
                     
             
         # If a value is specified, use the newton-raphson method to generate a random variate
@@ -1100,7 +1157,7 @@ def MGF(RVar):
     Output:     1. The moment generating function
     """
     mgf=ExpectedValue(RVar,exp(t*x))
-    mgf.simplify()
+    simplify(mgf)
     return mgf
 
 def MinimumIID(RVar,n):
@@ -1230,7 +1287,7 @@ def OrderStat(RVar,n,r,replace='w'):
             Fx=cdf_dummy.func[i]
             Sx=sf_dummy.func[i]
             ordfunc=const*(Fx**(r-1))*(Sx**(n-r))*fx
-            ordstat_func.append(ordfunc.simplify())
+            ordstat_func.append(simplify(ordfunc))
         # Return the distribution of the order statistic
         return RV(ordstat_func,RVar.support,['continuous','pdf'])
 
@@ -1538,7 +1595,7 @@ def Transform(RVar,gXt):
         # Substitute x into the transformed random variable
         trans_func2=[]
         for i in range(len(trans_func)):
-            trans_func2.append(trans_func[i].subs(t,x).simplify())
+            trans_func2.append(simplify(trans_func[i].subs(t,x)))
         # Create and return the random variable
         return RV(trans_func2,trans_supp,['continuous','pdf'])
 
@@ -1733,7 +1790,7 @@ def Convolution(RVar1,RVar2):
             fz=Transform(temp3,gln)
             convfunc=[]
             for i in range(len(fz.func)):
-                convfunc.append(fz.func[i].simplify())
+                convfunc.append(simplify(fz.func[i]))
             return RV(convfunc,fz.support,['continuous','pdf'])
             
 
@@ -1794,7 +1851,7 @@ def Maximum(RVar1,RVar2):
             cdf1=cdf_dummy1.func[0]
             cdf2=cdf_dummy2.func[0]
             maxfunc=cdf1*cdf2
-            return RV(maxfunc.simplify(),[0,oo],['continuous','cdf'])
+            return RV(simplify(maxfunc),[0,oo],['continuous','cdf'])
         # Otherwise, compute the min using the full algorithm
         Fx=CDF(RVar1)
         Fy=CDF(RVar2)
@@ -1829,8 +1886,7 @@ def Maximum(RVar1,RVar2):
                 currFy=Fy.func[yindx]
                 yindx+=1
             Fmax=-(1-currFx)*(1-currFy)
-            Fax=Fmax.simplify()
-            max_func.append(Fmax)
+            max_func.append(simplify(Fmax))
         # Return the random variable
         return RV(max_func,max_supp2,['continuous','cdf'])
     
@@ -1898,7 +1954,7 @@ def Minimum(RVar1,RVar2):
             sf1=sf_dummy1.func[0]
             sf2=sf_dummy2.func[0]
             minfunc=1-(sf1*sf2)
-            return RV(minfunc.simplify(),[0,oo],['continuous','cdf'])
+            return RV(simplify(minfunc),[0,oo],['continuous','cdf'])
         # Otherwise, compute the min using the full algorithm
         Fx=CDF(RVar1)
         Fy=CDF(RVar2)
@@ -1933,8 +1989,7 @@ def Minimum(RVar1,RVar2):
                 currFy=Fy.func[yindx]
                 yindx+=1
             Fmin=1-(1-currFx)*(1-currFy)
-            Fmin=Fmin.simplify()
-            min_func.append(Fmin)
+            min_func.append(simplify(Fmin))
         # Return the random variable
         return RV(min_func,min_supp2,['continuous','cdf'])
 
@@ -2152,16 +2207,16 @@ def Product(RVar1,RVar2):
                     # 1st Qd, Scenario 2
                     if c==0 and d<oo:
                         for k in range(len(vfunc)):
-                            if vsupp[k]>=0 and v[k+1]<=a*d:
+                            if vsupp[k]>=0 and vsupp[k+1]<=a*d:
                                 vfunc[k]+=pv
-                            if vsupp[k]>=a*d and v[k+1]<=b*d:
+                            if vsupp[k]>=a*d and vsupp[k+1]<=b*d:
                                 vfunc[k]+=qv
                     # 1st Qd, Scenario 3
                     if c>0 and d==oo:
                         for k in range(len(vfunc)):
                             if vsupp[k]>=b*c:
                                 vfunc[k]+=pv
-                            if vsupp[k]>=a*c and v[k+1]<=b*c:
+                            if vsupp[k]>=a*c and vsupp[k+1]<=b*c:
                                 vfunc[k]+=rv
                     # 1st Qd, Scenario 4
                     if c>0 and d<oo:
@@ -2259,13 +2314,13 @@ def Product(RVar1,RVar2):
                     else:
                         gj=Y_dummy.func[j]
                     fi=X_dummy.func[i]
-                    pv=-integral(fi*gj*(1/x),(x,a,b))
+                    pv=-integrate(fi*gj*(1/x),(x,a,b))
                     if d<oo:
-                        qv=-integral(fi*gj*(1/x),(x,a,(v/d)))
+                        qv=-integrate(fi*gj*(1/x),(x,a,(v/d)))
                     if c>0:
-                        rv=-integral(fi*gj*(1/x),(x,(v/c),b))
+                        rv=-integrate(fi*gj*(1/x),(x,(v/c),b))
                     if c>0 and d<oo:
-                        sv=-integral(fi*gj*(1/x),(x,(v/c),(v/d)))
+                        sv=-integrate(fi*gj*(1/x),(x,(v/c),(v/d)))
                     # 3rd Qd, Scenario 1
                     if c==0 and d==oo:
                         for k in range(len(vfunc)):
@@ -2508,3 +2563,27 @@ def PlotDisplay(plot_list,suplist=None):
     for i in range(len(plot_list)):
         PlotDist(plot_list[i],suplist,'display')
     #plt.show()
+
+def PlotDist2(RVar):
+    plt.ion()
+    funclist=['exp','log','sqrt']
+    for i in range(len(RVar.func)):
+        if RVar.support[i]==-oo:
+            support1=RVar.variate(s=.01)[0]
+        else:
+            support1=RVar.support[i]
+        if RVar.support[i+1]==oo:
+            support2=RVar.variate(s=.99)[0]
+        else:
+            support2=RVar.support[i+1]
+        x=plt.arange(support1,support2,.01)
+        str_func=str(RVar.func[i])
+        for i in range(len(funclist)):
+            if funclist[i] in str_func:
+                str_func=str_func.replace(funclist[i],
+                                          'plt.'+funclist[i])
+        
+        s=eval(str_func)
+        plt.plot(x,s,color='blue')
+        
+    

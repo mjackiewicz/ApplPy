@@ -72,3 +72,8 @@ def Menu():
     print 'Discrete Distributions'
     print 'BenfordRV(),BinomialRV(n,p),GeometricRV(p),PoissonRV(theta)'
 
+print '-----------------'
+print 'Welcome to ApplPy'
+print '-----------------'
+Menu()
+

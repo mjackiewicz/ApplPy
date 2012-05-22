@@ -1,0 +1,493 @@
+
+\documentclass[11pt,epsfig,psfig,doublespace,singlespace]{article}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%     FOR WILLIAM AND MARY LATEX  \documentstyle[12pt]{article}
+
+\setlength{\oddsidemargin}{0cm}
+\setlength{\topmargin}{0cm}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0cm}
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6.5in}
+\setlength{\topskip}{0cm}
+\renewcommand{\baselinestretch}{1.5}
+\renewcommand{\dbltopfraction}{0.3}
+\renewcommand{\topfraction}{0.3}
+\renewcommand{\bottomfraction}{0.3}
+\renewcommand{\dblfloatpagefraction}{0.3}
+\renewcommand{\floatpagefraction}{0.3}
+\renewcommand{\textfraction}{0.01}
+\newcommand{\Nset}{{N}}
+\newcommand{\IGNORE}[1]{}
+\newcommand{\INLINEFIG}[1]{\epsffile{#1.eps}}
+\newcommand{\FIG}[1]{\begin{center}
+  \mbox{\epsfclipoff\epsffile{#1.eps}}
+  \end{center}}
+\def\epsfsize#1#2{0.6#1}
+\newcommand{\Reals}{\mbox{$\rm I\!R$}}
+\newcommand{\Naturals}{\mbox{$\rm I\!N$}}
+\newcommand{\Integers}{\mbox{$\rm Z\!\!\!Z$}}
+\newcommand{\Rationals}{\mbox{$\rm I\!\!\!Q$}}
+\newcommand{\Complexes}{\mbox{$\rm I\!\!\!C$}}
+\newcommand{\Geom}{{\rm Geom}}
+\newcommand{\ModGeom}{{\rm ModGeom}}
+\newcommand{\ShiftGeom}{{\rm ShiftGeom}}
+\newcommand{\Expo}{{\rm Expo}}
+\newcommand{\Const}{{\rm Const}}
+\newcommand{\Unif}{{\rm Unif}}
+\newcommand{\IFF}{\mbox{$\Longleftrightarrow$}}
+\newcommand{\THEN}{\mbox{$\Rightarrow$}}
+\newcommand{\ASSIGN}{\mbox{$~\leftarrow~$}}
+\newcommand{\EQDEF}{\stackrel{\rm def}{=}}
+\newcommand{\One}{{\rm \bf 1}}
+\newcommand{\Zero}{{\rm \bf 0}}
+\newcommand{\Prob}{{\rm Pr}}
+\newcommand{\E}{{\rm E}}
+\newcommand{\DELTA}[1]{\delta_{#1}}
+\newcommand{\stv}{\leq_{\rm v}}
+\newcommand{\Example}[1]{\begin{quote}\begin{example}{\rm #1}\end{example}\end{quote}}
+\usepackage{graphics}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+%\newtheorem{example}{Example}[section]
+%\input tcilatex
+%\input SETBMP
+%\input SETEPS
+%\input SETWMF
+%\input SETpdf
+
+\def\cp{${\cal{P}}$}
+\def\CP{\cp}
+
+\begin{document}
+\title{\bf The ApplPy User's Guide}         % Enter your title between curly braces
+\vspace{0.4in}
+\author{\begin{tabular}{cc}
+  Matthew Robinson \\
+\end{tabular}}
+\date{\today}          % Enter your date or \today between curly braces
+\maketitle
+\section{Introduction}
+Welcome to ApplPy and the world of open-source computational probability! This guides is primarily intended to serve as a reference for new users. As such, it will cover the installation of the software, various methods of running it, and a basic description of each procedure. Before delving into any of these topics, however, we will begin with a brief overview of the ApplPy project and what it hopes to accomplish for its end users
+\subsection{What is ApplPy?}
+\paragraph{} ApplPy stands for A Probability Programming Language -- Python Edition. The primary goal of ApplPy is to provide an open-source conceptual probability package capable of manipulating random variables symbolically. Although the development of ApplPy has begun only recently, it is derived from Maple-based project known as A Probability Programming Language (APPL). In the past several years, APPL has seen widespread success, both as an educational and research platform. It has been successfully integrated into both undergraduate and graduate level courses at the College of William and Mary and the United States Military Academy, while also facilitating research in areas ranging from order statistics to queuing theory. The hope of ApplPy is to make the computational capabilities of APPL available to researchers and educators on a free, open-source platform.
+\subsection{How is ApplPy used?}
+\paragraph{} Although ApplPy can be used for a variety of purposes, it best fills three special roles. First, it enables students to gain an intuitive understanding of mathematical statistics by automating tedious, calculus-intensive routines. As such, students can experiment with different models without having to perform difficult derivations or produce ad-hoc code. Second, it allows students to check hand derived results. This aids the learning process by providing a quick and reliable 'answer key'. Finally, it allows researchers to explore systems whose properties would be intractable to derive by hand. As mentioned above, the Maple-based APPL software has already spawned a variety of insightful research. ApplPy has the potential to continue along this pathway.
+\section{Installation}
+This section will cover the installation of the ApplPy software, as well as it's dependencies.
+\subsection{Dependencies}
+ApplPy depends on two software packages, SymPy and Matplotlib. It also requires Python 2 (version 2.4 or later). Python 2 can be downloaded from http://www.python.org. Take care not to use Python 3, since SymPy is not currently compatible with Python 3.
+\paragraph{SymPy} For symbolic capabilities, ApplPy requires SymPy, an open-source computer algebra system written entirely in Python. The recommended method of installing SymPy is to pull it from the SymPy Github repository, which can be found at https://github.com/sympy/sympy. Linux users can pull all of the files from the repository directly by typing 
+\\
+ \texttt{git clone https://github.com/sympy/sympy} 
+ \\
+from the Terminal. Windows users can download the package as a zip file. Note that there is also a release of SymPy available from http://www.sympy.org. The Github release is recommended because new features are constantly being added to the system. As such, certain ApplPy procedures may only work using the Github release. \\
+Once you have found a suitable method for downloading SymPy, place the package in a folder called \texttt{sympy}. On Windows systems, can simply be placed in the C drive so that the full file path would be \texttt{C://sympy}. On Linux system, the files can be placed in the user's home folder.
+\paragraph{Matplotlib} The ApplPy plotting functions runs using a package called Matplotlib. Matplotlib runs using numpy, so downloading numpy may be necessary to enable plotting. The Matplotlib package can be downloaded from http://www.matplotlib.org. Since the package will be downloaded directly as a Python module, nothing further is required after installing Matplotlib. If it is not install, a printed warning will appearing when ApplPy is imported, stating that plotting is not currently available. Note that the plotting package may change in the future, as alternate options are explored. The hope is to have plotting functional included natively in ApplPy, so that the user does not have to download anything other than SymPy.
+\subsection{ApplPy}
+\paragraph{Download} The ApplPy software can be downloaded from the ApplPy Github repository at https://github.com/MthwRobinson/ApplPy. ApplPy can be downloading using whatever technique you used to download SymPy. Once ApplPy has been downloaded, find the your SymPy folder and place the ApplPy folder inside of it, renaming it \texttt{applpy}. Inside your applpy folder, you will find a script named APPLPY.py. Place this file inside a directory that appears inside your Python path. If you are unsure about which directories are in your Python path, open up an interactive session of Python and type \texttt{import sys; sys.path}. Now, open up the file and change the variable \texttt{sympypath} to a string that contains a path to your sympy folder.  An example of what this might look like is \texttt{sympypath='/home/matt/sympy'}. You are now ready to import and run ApplPy.
+\paragraph{Options for running ApplPy} Since ApplPy is nothing more than a set of Python procedures, it can run from any Python interactive session. The recommended option for running ApplPy is to use the Python IDLE interface that is included in every Python download. It is also possible to run ApplPy from your operating system's command line interface. Simply start a Python interactive session, and then import the APPLPY.py start-up script. Other options include using iPython (an interactive Python command line interface) or SymPy Notebook (a Mathematica style notebook developed for use with SymPy).
+\paragraph{Portability} Since ApplPy has been developed entirely in Python, it is compatible with almost any operating system. ApplPy will run happily on your Windows, Linux or Mac box.
+\section{Procedures}
+By now, you have hopefully figured out how to download and import ApplPy. It is now time to begin exploring ApplPy's capabilities. Each ApplPy procedure currently falls into one of five categories: procedures relating to the random variable class, procedures for changing the functional form of a random variable, procedures on one random variable, procedures on two random variables and utility procedures. For the remainder of the guide, the following notation will hold:
+\begin{itemize}
+\item Capital letters X Y denote random variables
+\item Lower case letter x y denote variates
+\item Greek letters $\theta$ $\kappa$ denote parameters
+\item n and r denote integers where $n \geq r$
+\item gX is a function
+\item Square brackets [ ] denote a list
+\item Curly brackets \{ \} denote an optional parameter
+\end{itemize}
+\subsection{The Random Variable Class}
+\subsubsection{Random Variable Class}
+\paragraph{Syntax} RV([func],[support],\{[ftype]\})
+\paragraph{Description} The Random Variable class forms the core data structure of ApplPy, and underlies ApplPy's ability to process piecewise distributions. The first argument in the initialization procedure is a list of functions. The second is a list of support values. For continuous distributions, this will contain one more element than the function list, because each function requires two endpoints. For discrete distributions, both lists will contain the same number of elements. The final argument is a list consisting of two string. One indicates whether the distribution is discrete or continuous, and the other determines the functional representation of the random variable. If the third argument is not entered, the initialization procedure assumes that the user has input a continuous PDF. All string in the ftype list are entered in all lower case letters. Possible values for the functional representation string are cdf, chf, hf, idf, pdf and sf. The following code shows how to initialize a continuous piecewise PDF and a discrete piecewise PDF.
+\begin{itemize}
+\item \texttt{[$\sharp$ Create a continuous, piecewise pdf}
+\item \texttt{[In] X=RV([x-1,3-x],[1,2,3]['continuous','pdf'])}
+\item \texttt{$\sharp$ Create a discrete, piecewise pdf}
+\item \texttt{[In] Y=RV([1/4,1/4,1/4,1/4],[1,2,3,4],['discrete','pdf'])}
+\end{itemize} 
+\subsubsection{Special Random Variables}
+\paragraph{Syntax} \textit{DistName}RV($\theta_1$,$\theta_2$,...,$\theta_n$)
+\paragraph{Description} ApplPy comes has pre-coded a number of commonly used distribution in order to make the process of generating distributions more streamlined. Examples include the Exponential, Triangular and Normal distributions. These procedures are called by replace \textit{DistName} in the syntax above with the name of the distribution in question. Each distribution is coded as a sub-class of the main random variable class. In distributions whose parameters have restrictions, the relevant assumptions have been built into the sub-class. For instance, the ExponentialRV class assumes that the parameter is a positive number. If the distribution is called with no arguments, then a distribution with unspecified parameters is returned. The following sytax shows how to generate a fully specified, partially specified, and unspecified Weibull distribution. Note that lambda cannot be used as a parameter, because \texttt{lambda} is a predefined Python term that creates an in line procedure. For a full list of distribution types, type \texttt{Menu()} in an ApplPy session.
+\begin{itemize}
+\item \texttt{$\sharp$ Create an unspecified Weibull distribution}
+\item \texttt{[In] X=WeibullRV()}
+\item \texttt{$\sharp$ Create a partially specified Weibull distribution}
+\item \texttt{[In] X=WeibullRV(kappa=1/2)}
+\item \texttt{$\sharp$ Create a fully specified Weibull distribution}
+\item \texttt{[In] X=WeibullRV(1/2,2)}
+\end{itemize}
+\subsubsection{Variate Generation}
+\paragraph{Syntax} X.variate(\{n\},\{s\})
+\paragraph{Description} The random variable class contains an algorithm designed to produce random variates from a given distribution. For the standard random variable class, this is accomplished using numerical methods. Specifically, the Newton-Raphson method is used to find the CDF value that corresponds to a randomly generated quantile. The optional parameter n determines the number of parameters to be drawn. If left unspecified, n defaults to 1. The optional parameter s determines the quantile of the variate. if left unspecified, a random quantile is used. For each of the commonly used distributions, the inverse CDF has been hard coded in order to facilitate faster variate generation. As such, random variate generation is generally faster for pre-defined distributions. The following code shows how lists of random variates can be generated in ApplPy.
+\begin{itemize}
+\item \texttt{$\sharp$ Create a random variable}
+\item \texttt{[In] X=TriangularRV(1,2,3)}
+\item \texttt{$\sharp$ Create a list of 5 random variates}
+\item \texttt{[In] X.variate(5)}
+\item \texttt{[Out] [1.40918,1.619644,1.946498,2.27927,2.441339]}
+\item \texttt{$\sharp$ Find the 75th percentile}
+\item \texttt{[In] X.variate(s=.75)[0]}
+\item \texttt{[Out] 2.292893}
+\end{itemize}
+For this example, the floating point numbers have been truncated. By default, ApplPy will produce 32-bit or 64-bit floating point numbers, depending on the available hardware and software.
+\subsubsection{PDF Verification}
+\paragraph{Syntax} X.verifyPDF()
+\paragraph{Description} ApplPy has a procedure that will verify whether or not a PDF is valid. This procedure takes no arguments, and returns a print statement that confirms or denies that validity of the PDF.
+\begin{itemize}
+\item \texttt{[In] X=ExponentialRV(1/2)}
+\item \texttt{[In] X.verifyPDF()}
+\item \texttt{[Out] Now checking for area ...}
+\item \texttt{      The area under f(x) is: 1}
+\item \texttt{      The pdf of the random variable:}
+\item \texttt{      is valid}
+\end{itemize}
+\subsubsection{Pprint Display}
+\paragraph{Syntax} X.display()
+\paragraph{Descritption} This procedure displays the random variable as a piecewise function using SymPy's pprint displayhook.
+\begin{itemize}
+\item \text{[In] X=ExponentialRV()}
+\item \text{[In] X.display()}
+\item \text{[Out] continuous pdf with support [0,oo]:}
+\item \begin{cases}
+		 \theta e^{- \theta x} & \text{for}\: x \geq 0 \\
+		0 & \text{otherwise} 
+		\end{cases}
+\end{itemize}
+\subsubsection{Latex Output}
+\paragraph{Syntax} X.latex()
+\paragraph{Description} This code produces the latex input for the distribution in question.
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(1,2,3)}
+\item \texttt{[In] X.latex()} 
+\end{itemize}
+The latex from the output for this statement produces the code for: \\
+\\
+\begin{cases} 
+x -1 & \text{for}\: 1 \leq x \leq 2 \\
+- x + 3 & \text{for}\:  2 \leq x \leq 3 \\
+0 & \text{otherwise}
+\end{cases}
+\subsection{Functional Form Conversion}
+ApplPy's functional form conversion procedures alter and track the representation of random variables. Currently, the ApplPy supports six different random variable representations: cumulative   distribution function ('cdf'), cumulative hazard function ('chf'), hazard function ('hf'), inverse density function ('idf'), probability density function ('pdf') and survivor function ('sf'). This section also covers special functions designed to manipulate discrete random variables.
+\subsubsection{Functional Form Conversion}
+\paragraph{Syntax} \textit{\{CDF,CHF,HF,IDF,PDF,SF\}}(X,\{x\})
+\paragraph{Description} The CDF,CHF,HF,IDF,PDF and SF procedures change the functional form of a random variable, and optionally evaluate it at a given point $x$. The syntax for each functional form is the same. When the procedure is called with just the random variable argument, the output is another random variable. If an optional point $x$ is given, then the output is either numerical or symbolic. In cases in which the functional form is already correct, the random variable passed into the procedure is simply returned unchanged. These procedures accept both discrete and continuous random variables. The CDF and SF procedures are also useful for finding left and right tail probabilities for a given distribution at a given quantile.
+\begin{itemize}
+\item \texttt{$\sharp$ Create a random variable}
+\item \texttt{[In] X=TriangularRV(2,4,6)}
+\item \texttt{$\sharp$ Convert to hazard function form}
+\item \texttt{[In] HF(X).display()}
+\item \texttt{[Out] continuous hf with support [2,4,6]}
+\item \begin{cases} 
+		\frac{- 2 x + 4}{x^{2} - 4 x -4} & \text{for}\: x \geq 2 \\
+		\frac{2}{- x + 6} & \text{for}\: x \geq 4 \\
+		0 & \text{otherwise} 
+		\end{cases}
+\item \texttt{$\sharp$ Find $P(X\leq \frac{5}{2})$}
+\item \texttt{[In] CDF(X,5/2)}
+\item \texttt{[Out] 0.03125}
+\end{itemize}
+\subsubsection{Bootstrapping}
+\paragraph{Syntax} BootstrapRV([data])
+\paragraph{Description} This code performs an infinite bootstrap of a data set. That is to say, each data point is assigned a probability of $\frac{1}{n}$, which would result if the data set were bootstrapped an infinite number of times. The code will bootstrap both symbolic and numeric data points. The numerical data points are arranged in ascending order and the symbolic data points are arranged in alphabetical order. If a data point is observed $n$ times in a data set, it's probability value is given $n$ times the weight of a data point that appears once. 
+\begin{itemize}
+\item \texttt{$\sharp$ Bootstrap a data set}
+\item \texttt{data=[1,x,3,y]}
+\item \texttt{[In] Xstar=BootstrapRV(data)}
+\item \texttt{[In] Xstar.display()}
+\item \texttt{[Out] discrete pdf where \{x->f(x)\}:}
+\item \texttt{\{1->0.25\},\{3->0.25\},\{x->0.25\},\{y->0.25\}}
+\end{itemize}
+\subsubsection{Convert}
+\paragraph{Syntax} Convert(X,\{gX\})
+\paragraph{Description} This procedures transforms discrete random variables with a functional representation into discrete random variables with a floating point representation. Conversions of this type allow for discrete random variables with functional representations to be used as input in some of the procedures described below. The optional parameter gX describes the interval between values in the discrete random variable. The default is $x_{n+1}=x_{n}+1$. Note that functional discrete random variables have the type maker 'Discrete' as opposed to 'discrete'. They have not yet been fully integrated into the software, but will be in future releases. Convert only works on random variables with finite support.
+\begin{itemize}
+\item \texttt{[In] X=BinomialRV(3,1/2)}
+\item \texttt{[In] X.display()}
+\item \texttt{[Out] Discrete pdf with support [0,3]:}
+\item \begin{bmatrix}6 
+		\frac{0.5^{x} 0.5^{- x + 3}}{x! \left(- x + 3\right)!}
+	  \end{bmatrix}
+\item \texttt{[In] Y=Convert(X)}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] discrete pdf where \{x->f(x)\}:}
+\item \texttt{\{0 -> 0.125\}, \{1 -> 0.375\},  \{2 -> 0.375\},  \{3 -> 0.125\}}
+\end{itemize}
+\subsection{Procedures on One Random Variable} This section describe symbolic statistical techniques that are performed on one random variable. The three major types of procedures described in this section are iterative random variable algebra procedures, expected value procedures and transformation procedures.
+\subsubsection{IID Convolutions}
+\paragraph{Syntax} ConvolutionIID(X,n)
+\paragraph{Description} This procedure computes the sum of $n$ independent and identically distributed distributions. The algorithm works by iteratively applying the convolution procedure described below.
+\begin{itemize}
+\item \texttt{[In] X=ExponentialRV()}
+\item \texttt{[In] Y=ConvolutionIID(X,3)}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] continuous pdf with support [0,oo]:}
+\item \begin{cases} 
+		\frac{1}{6} \theta^{4} x^{3} e^{- \theta x} & \text{for}\: x \geq 0 \\
+		0 & \text{otherwise} 
+	   \end{cases}
+\end{itemize}
+\subsubsection{Coefficient of Variation}
+\paragraph{Syntax} CoefOfVar(X)
+\paragraph{Description} This procedure computes the coefficient of variation $\frac{\sigma}{\mu}$ of the random variable.
+\begin{itemize}
+\item \texttt{[In] X=WeibullRV()}
+\item \texttt{[In] CoefOfVar(X)}
+\item \texttt{[Out]} 
+\end{itemize}
+$$
+\frac{\theta^{- \kappa \left(1 - \frac{\kappa + 1}{\kappa}\right)} \sqrt{- 
+\theta^{2 \kappa \left(1 - \frac{\kappa + 1}{\kappa}\right)} \Gamma^{2}\left(1 + 
+\frac{1}{\kappa}\right) + \theta^{\kappa \left(1 - \frac{\kappa + 2}{\kappa}\right)} \Gamma\left(1 + \frac{2}{\kappa}\right)}}{\Gamma\left(1 + \frac{1}{\kappa}\right)}
+$$
+\subsubsection{Expected Values}
+\paragraph{Syntax} ExpectedValue(X,gX)
+\paragraph{Description} This procedures computes the expected value of a random variable X where X is transformed by the function g(x). The expected value procedure is used in the algorithms to find the mean, variance, skewness and kurtosis of random variables.
+\begin{itemize}
+\item \texttt{[In] X=ChiRV()}
+\item \texttt{[In] ExpectedValue(X,x**2)}
+\item \texttt{[Out]}
+\end{itemize}
+$$
+\frac{2^{\frac{1}{2} N} 2^{- \frac{1}{2} N + 1} \Gamma\left(\frac{1}{2} N + 1\right)}{\Gamma\left(\frac{1}{2} N\right)}
+$$
+\subsubsection{Kurtosis}
+\paragraph{Syntax} Kurtosis(X)
+\paragraph{Description} This procedure computes the Kurtosis of a random variable
+\begin{itemize}
+\item \texttt{[In] X=BetaRV(2,2)}
+\item \texttt{[In] data=X.variate(10)}
+\item \texttt{[In] Xstar=BootstrapRV(data)}
+\item \texttt{[In] Kurtosis(Xstar)}
+\item \texttt{[Out] 2.06567188978}
+\end{itemize}
+\subsubsection{Maximum IID}
+\paragraph{Syntax} MaximumIID(X,n)
+\paragraph{Description} This procedure finds the distribution of the maximum of n independent and identically distributed distributions by applying the Maximum algorithm iteratively. For more details concerning the maximum procedure, see its listing below.
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(1,3,7)}
+\item \texttt{[In] Y=MaximumIID(X,3)}
+\item \texttt{[Out] continuous cdf with support [1,3,7]:}
+\end{itemize}
+\begin{cases} 
+	\left(- \frac{1}{12} x^{2} + \frac{1}{6} x + 0.916666666666667\right) 
+	\left(\frac{1}{12} x^{2} - \frac{1}{6} x -0.916666666666667\right) 
+	& \text{for}\: 1 \leq x \leq 3 \\- \frac{1}{24} x^{2} + \frac{7}{12} x -2.04166666666667 
+	& \text{for}\: 3 \leq x \leq 7 \\0 & \text{otherwise} 
+\end{cases}
+\subsubsection{Mean}
+\paragraph{Syntax} Mean(X)
+\paragraph{Description} This procedure computes the mean of the given random variable.
+\begin{itemize}
+\item \texttt{[In] X=ExponentialRV()}
+\item \texttt{[In] Mean(X)}
+\item \texttt{[Out]} $\frac{1}{\theta}$
+\end{itemize}
+\subsubsection{Moment Generating Function}
+\paragraph{Syntax} MGF(X)
+\paragraph{Description} Produces the moment generating function of a random variable X. The moment generating function is represented as a function of t.
+\begin{itemize}
+\item \texttt{[In] X=UniformRV()}
+\item \texttt{[In] MGF(X)}
+\item \texttt{[Out]} $- \frac{e^{a t}}{t \left(- a + b\right)} + \frac{e^{b t}}{t \left(- a + b \right)}$
+\end{itemize}
+\subsubsection{Minimum IID}
+\paragraph{Syntax} MinimumIID(X,n)
+\paragraph{Description} This procedure finds the distribution of the minimum of n independent and identically distributed distributions by applying the Minimum algorithm iteratively. For more details concerning the maximum procedure, see its listing below.
+\begin{itemize}
+\item \texttt{[In] X=GammaRV(.5,2)}
+\item \texttt{[In] Y=MinimumIID(X,3)}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] continuous cdf with support [0,oo]:}
+\item \begin{cases} 
+		\left(- \left(0.5 x + 1.0\right)^{2} + e^{1.0 x}\right) e^{- 1.0 x} 
+		& \text{for}\: x \geq 0 \\0 & \text{otherwise} 
+		\end{cases}
+\end{itemize}
+\subsubsection{Order Statistics}
+\paragraph{Syntax} OrderStat(X,n,r)
+\paragraph{Description} The order statistic procedure computes the distribution of the $r^{th}$ sample drawn from the random variable X, given a sample size of $n$, where $n \geq r$.
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(1,5,9)}
+\item \texttt{[In] Y=OrderStat(X,5,2)}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] continuous pdf with support [1,5,9]:}
+\item \begin{cases} 
+		\left(\frac{1}{16} x -0.0625\right) \left(- \frac{1}{32} x^{2} +
+ 		\frac{1}{16} x + 0.96875\right)^{3} \left(\frac{5}{8} x^{2} - \frac{5}{4} x +
+		 0.625\right) 
+		 & \text{for}\: 1 \leq x \leq 5 \ \
+		 \left(\frac{1}{16} x -0.5625\right) \left(\frac{1}{32} x^{2} -\frac{9}{16} x + 				 		2.53125\right)^{3} \left(\frac{5}{8}
+ 		x^{2} - \frac{45}{4} x + 30.625\right) & \text{for}\: 5 \leq x \leq 9 \\
+ 		0 & \text{otherwise} 
+ 		\end{cases}
+\end{itemize}
+\subsubsection{Product IID}
+\paragraph{Syntax} ProductIID(X,n)
+\paragraph{Description} This procedure finds the distribution of the product of n independent and identically distributed distributions by applying the product algorithm iteratively. For more details concerning the product procedure, see its listing below.
+\begin{itemize}
+\item \texttt{[In] Xstar=BootstrapRV([x,y,z])}
+\item \texttt{[In] Ystar=ProductIID(Xstar,3)}
+\item \texttt{[In] Ystar.display()}
+\item \texttt{[Out] discrete pdf where {x->f(x)}:}
+\item \texttt{\{x**4 -> 0.012345\},  \{y**4 -> 0.012345\},  \{z**4 -> 0.012345\},  \{x*y**3 -> 0.049382\},  \{x*z**3 -> 0.049382\},  \{x**3*y -> 0.049382\},  \{y*z**3 -> 0.0493827\},  \{x**3*z -> 0.0493827\},  \{y**3*z -> 0.0493827]\},  \{x**2*y**2 -> 0.074074\},  \{x**2*z**2 -> 0.074074\},  \{y**2*z**2 -> 0.074074\},  \{x*y*z**2 -> 0.1481481\},  \{x*y**2*z -> 0.1481481\},  \{x**2*y*z -> 0.1481481\}}
+\end{itemize}
+\subsubsection{Skewness}
+\paragraph{Syntax} Skewness(X)
+\paragraph{Description} This procedure computes the skewness of a random variable.
+\begin{itemize}
+\item \texttt{[In] X=BetaRV(2,3)}
+\item \texttt{[In] Skewness(X)}
+\item \texttt{[Out] 2/7}
+\end{itemize}
+\subsubsection{Transform}
+\paragraph{Syntax} Transform(x,gX)
+\paragraph{Description} This algorithm is used to transform a random variable X by a function gX. The transformation gX is entered using a list-of-lists data structure, where the first list of the transformation functions and the second is a support list for the transformation. Several special issues dictate how the user should input the transformation. The first is that the transformation functions must be monotonic along each segment of the transformation. If they are not (for example in the case of $x \rightarrow x^{2}$), local maxima and minima must be included in the support of the transformation. For instance, $g(x)=x^{2}$ for $-\infty$ to $\infty$ would be input as [[x**2,x**2],[-oo,0,oo]]. The minimum point at zero is included in the support. User must also be sure to include any non-differentiable points in the support of the transformation. The support of the transformation may 'overshoot' the support of the random variable, as the algorithm will automatically disregard any segment that does not apply.
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(2,4,5)}
+\item \texttt{[In] gX=[[x**2,x**2],[-oo,0,oo]]}
+\item \texttt{[In] Y=Transform(X,gX)}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] continuous pdf with support [4,16,25]:}
+\item \begin{cases} 
+		\frac{\sqrt{x} -2}{6 \sqrt{x}} & \text{for}\: 4 \leq x \leq 16 \\
+		\frac{- \sqrt{x} + 5}{3 \sqrt{x}} & \text{for}\: 16 \leq x \leq 25 \\
+		0 & \text{otherwise} 
+	  \end{cases}
+\end{itemize}
+\subsubsection{Truncation}
+\paragraph{Syntax} Truncate(X,[lower,upper])
+\paragraph{Description} Truncate reduces the support of a random variable, and the renormalizes it to make it a valid PDF. The result is a distribution with the same shape as the parent distribution between the two given end points.
+\begin{itemize}
+\item \texttt{[In] X=BetaRV(2,2)}
+\item \texttt{[In] Y=Truncate(X,[1/4,3/4])}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] continuous pdf with support [0.25,0.75]:}
+\item \begin{cases} 
+		8.727273 x \left(- x + 1\right) & \text{for}\: 0.25 \leq x \leq 0.75 \\
+		0 & \text{otherwise} 
+	  \end{cases}
+\end{itemize}
+\subsubsection{Variance}
+\paragraph{Syntax} Variance(X)
+\paragraph{Description} This procedure computes the variance of a random variable.
+\begin{itemize}
+\item \texttt{[In] X=UniformRV()}
+\item \texttt{[In] Variance(X)}
+\item \texttt{[Out]} $\frac{1}{12} a^{2} - \frac{1}{6} a b + \frac{1}{12} b^{2}$
+\end{itemize}
+\subsection{Procedures on Two Random Variables} This section describes statistical techniques that are applied to two or more random variables. The procedures in this section generally involve random variable algebra, and form the core of ApplPy's random variable modelling capabilities.
+\subsubsection{Convolution}
+\paragraph{Syntax} Convolution(X,Y) or X+Y
+\paragraph{Description} The convolution procedures allows for the summation of two random variables. Syntactically, this can be accomplish by either calling the Convolution procedure directly, or using the '+' operator. In the random variable class, the '+' operator is programmed to recognize convolutions as summations. Moreover, the convolution procedure can also perform subtraction by applying the transformation $x \rightarrow -x$ to the second random variable. As such, the convolution algorithm comprises part of ApplPy's core modelling capabilities. For lifetime distributions, convolutions are computed directly. However, for all other distributions, the convolution is computed by first finding the product of $e^{X}$ and $e^{Y}$, and then transforming the result. The addition of a pure convolution algorithm is currently being explored.
+\begin{itemize}
+\item \texttt{[In] X=UniformRV(1,2)}
+\item \texttt{[In] Y=UniformRV(3,4)}
+\item \texttt{[In] Z=X+Y}
+\item \texttt{[Out] continuous pdf with support [4,5,6]}
+\item \begin{cases} 
+		x -4.0 & \text{for}\: 4 \leq x \leq 5 \\
+		-x + 6.0 & \text{for}\: 5 \leq x \leq 6\\
+		0 & \text{otherwise} 
+		\end{cases}
+\end{itemize}
+\subsubsection{Maximum}
+\paragraph{Syntax} Maximum(X,Y)
+\paragraph{Description} This procedure computes the distribution of the maximum of two random variable.
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(2,4,6)}
+\item \texttt{[In] Y=TriangularRV(3,5,7)}
+\item \texttt{[In] Z=Maximum(X,Y)}
+\item \texttt{[In] Z.display()}
+\item \texttt{[Out] continuous pdf with support [3,4,5,6,7]:}
+\item \begin{cases} 
+		\frac{1}{8} x^{2} - \frac{3}{4} x + 0.125 
+		& \text{for}\: 3 \leq x \leq 4 \\
+		\frac{1}{8} x^{2} - \frac{3}{4} x + 0.125 
+		& \text{for}\: 4 \leq x \leq 5 \\
+		- \frac{1}{8} x^{2} + \frac{7}{4} x -6.125 
+		& \text{for}\: 5 \leq x \leq 6 \\
+		- \frac{1}{8} x^{2} + \frac{7}{4} x -6.125 
+		& \text{for}\: 6 \leq x \leq 7 \\
+		0 & \text{otherwise} 
+	\end{cases}
+\end{itemize}
+\subsubsection{Minimum}
+\paragraph{Syntax} Minimum(X,Y)
+\paragraph{Description} This procedure computes the distribution of the minimum of two random variables
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(2,4,6)}
+\item \texttt{[In] Y=TriangularRV(3,5,7)}
+\item \texttt{[In] Z=Minimum(X,Y)}
+\item \texttt{[In] Z.display()}
+\item \texttt{[Out] continuous pdf with support [2,3,4,5,6]:}
+\item \begin{cases} 
+		\frac{1}{8} x^{2} - \frac{1}{2} x + 0.5 
+		& \text{for}\: 2 \leq x \leq 3 \\
+		- \frac{1}{64} x^{4} + \frac{5}{32} x^{3} - \frac{21}{64} 			x^{2} - \frac{5}{16} x + 1.0625 
+		& \text{for}\: 3 \leq x \leq 4 \\
+		- \frac{1}{8} x^{2} + \frac{3}{2} x -3.5 
+		& \text{for}\: 4 \leq x \leq 5 \\
+		- \frac{1}{64} x^{4} + \frac{13}{32} x^{3} - \frac{253}				{64} x^{2} + \frac{273}{16} x -26.5625 
+		& \text{for}\: 5 \leq x \leq 6 \\
+		0 & \text{otherwise} 
+	\end{cases}
+\end{itemize}
+\subsubsection{Mixture}
+\paragraph{Syntax} Mixture([p1,p2,...,pn],[X1,X2,...,Xn])
+\paragraph{Description} Mixture computes the 'mixture' of a list of n random variables. The first argument is a list of weights for the random variables involve. These must sum to one. The second argument is a list of the random variable to be mixed. The resulting distribution is a result of these weighted mixtures.
+\begin{itemize}
+\item \texttt{[In] X1=TriangularRV(2,4,6)}
+\item \texttt{[In] X2=TriangularRV(3,5,7)}
+\item \texttt{[In] X3=TriangularRV(1,5,9)}
+\item \texttt{[In] Y=Mixture([.25,.25,.50],[X1,X2,X3])}
+\item \texttt{[In] Y.display()}
+\item \texttt{[Out] continuous pdf with support [1,2,3,4,5,6,7,9]:}
+\item \begin{cases} 
+		0.03125 x -0.03125 & \text{for}\: 1 \leq x \leq 2 \\
+		0.09375 x -0.15625 & \text{for}\: 2 \leq x \leq 3 \\
+		0.15625 x -0.34375 & \text{for}\: 3 \leq x \leq 4 \\
+		0.03125 x + 0.15625 & \text{for}\: 4 \leq x \leq 5 \\
+		- 0.15625 x + 1.09375 & \text{for}\: 5 \leq x \leq 6 \\
+		- 0.09375 x + 0.71875 & \text{for}\: 6 \leq x \leq 7 \\
+		- 0.03125 x + 0.28125 & \text{for}\: 7 \leq x \leq 9 \\
+		0 & \text{otherwise} 
+	\end{cases}
+\end{itemize}
+\subsubsection{Product}
+\paragraph{Syntax} Product(X,Y) or X*Y
+\paragraph{Description} The product procedure computes the product of two random variables. This procedure can either be called directly, or called using the '*' operator in the random variable class. The product procedure is also used to perform random variable division using the '/' operator. This is accomplished by first transforming the second argument by the transformation $x \rightarrow \frac{1}{x}$. As such, product serves as one of ApplPy's core random variable algebra procedures.
+\begin{itemize}
+\item \texttt{[In] X=UniformRV(2,4)}
+\item \texttt{[In] Y=UniformRV(3,5)}
+\item \texttt{[In] Z=X*Y}
+\item \texttt{[In] Z.display()}
+\item \texttt{[Out] continuous pdf with support [6,10,12,20]:}
+\item \begin{cases} 
+		0.25 \log{\left (\frac{1}{3} x \right )} - 0.25 \log{\left 		(2 \right )} & \text{for}\: 6 \leq x \leq 10 \\
+		- 0.25 \log{\left (\frac{1}{5} x \right )} + 0.25 		\log{\left (\frac{1}{3} x \right )} & \text{for}\: 10 \leq x \leq 12 \\
+		- 0.25 \log{\left (\frac{1}{5} x \right )} + 0.5 	\log{\left (2 \right )} & \text{for}\: 12 \leq x \leq 20 \\
+ 		0 & \text{otherwise}
+ 	 \end{cases}
+\end{itemize}
+\subsection{Utility Procedures} The utility procedures in ApplPy are designed to make it easier for users to process and visualize random variables. As such, the procedures in this section largely relating the the plotting of random variables.
+\paragraph{Syntax} PlotDist(X,\{[lower,upper]\})
+\paragraph{Description} PlotDist is called to display a two-dimensional plot of a random variable. The first argument is the random variable to be plotted, and the second argument is an optional argument that defines the limits of the plots. If not limits are given, the supports of the random variable are used as the default. For distributions with infinite supports, the $1^{st}$ and $99^{th}$ percentile are used instead.
+\begin{itemize}
+\item \texttt{[In] X=TriangularRV(2,4,6)}
+\item \texttt{[In] Y=TriangularRV(3,5,7)}
+\item \texttt{[In] Z=Mixture([.4,.6],[X,Y])}
+\item \texttt{[In] PlotDist(Z)}
+\item \texttt{[Out]}
+\end{itemize}
+\includegraphics[scale=0.5]{pdf_graph.png} 
+\end{document}

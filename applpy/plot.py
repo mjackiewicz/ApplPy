@@ -9,6 +9,8 @@ Plotting Module
 Defines procedures for plotting random variables
 
 """
+from sympy import *
+from applpy import *
 
 try:
     from pylab import *
@@ -54,10 +56,3 @@ def mat_plot(funclist,suplist,lab1=None,lab2=None,ftype='continuous'):
         grid(True)
 
 
-
-
-
-
-
-
-        
