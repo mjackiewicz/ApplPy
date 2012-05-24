@@ -2431,7 +2431,7 @@ def Product(RVar1,RVar2):
         vfunc_final=[]
         for i in range(len(vfunc)):
             if type(vfunc[i]) not in [int,float]:
-                vfunc_final.append(vfunc[i].subs(v,x))
+                vfunc_final.append(simplify(vfunc[i]).subs(v,x))
             else:
                 vfunc_final.append(vfunc[i])
         return RV(vfunc_final,vsupp,['continuous','pdf'])
@@ -2507,25 +2507,27 @@ def PlotDist(RVar,suplist=None,opt=None):
 
     # If the distribution is continuous, plot the function
     if RVar.ftype[0]=='continuous':
-        # Create a list of supports for the plot
+        # Return an error if the plot supports are not
+        #   within the support of the random variable
+        if suplist!=None:
+            if suplist[0]>suplist[1]:
+                raise RVError('Support list must be in ascending order')
+            if suplist[0]<RVar.support[0]:
+                raise RVError('Plot supports must fall within RV support')
+            if suplist[1]>RVar.support[1]:
+                raise RVError('Plot supporst must fall within RV support')
+        # Cut out parts of the distribution that don't fall
+        #   within the limits of the plot
         if suplist==None:
-            suplist=[RVar.support[0],
-                     RVar.support[len(RVar.support)-1]]
-            if -oo in suplist:
-                suplist[0]=float(RVar.variate(s=.01)[0])
-            if oo in suplist:
-                suplist[1]=float(RVar.variate(s=.99)[0])
-        plot_sup=[]
-        if suplist[0]>RVar.support[0]:
-            plot_sup.append(float(suplist[0]))
-        for i in range(len(RVar.support)):
-            if RVar.support[i]>=suplist[0]:
-                if RVar.support[i]<=suplist[1]:
-                    if RVar.support[i] not in plot_sup:
-                        plot_sup.append(float(RVar.support[i]))
-        if suplist[1]<RVar.support[len(RVar.support)-1]:
-            plot_sup.append(float(suplist[1]))
-        # Create a list of functions for the plot
+            if RVar.support[0]==-oo:
+                support1=float(RVar.variate(s=.01)[0])
+            else:
+                support1=float(RVar.support[0])
+            if RVar.support[len(RVar.support)-1]==oo:
+                support2=float(RVar.variate(s=.99)[0])
+            else:
+                support2=float(RVar.support[len(RVar.support)-1])
+            suplist=[support1,support2]                
         for i in range(len(RVar.func)):
             if suplist[0]>=RVar.support[i]:
                 if suplist[0]<=RVar.support[i+1]:
@@ -2533,57 +2535,38 @@ def PlotDist(RVar,suplist=None,opt=None):
             if suplist[1]>=RVar.support[i]:
                 if suplist[1]<=RVar.support[i+1]:
                     upindx=i
-        plot_func=[]
+        # Create a list of functions for the plot
+        plotfunc=[]
         for i in range(len(RVar.func)):
             if i>=lwindx and i<=upindx:
-                strfunc=str(RVar.func[i])
-                plot_func.append(strfunc)
-        plot_sup=[suplist[0]]
+                plotfunc.append(RVar.func[i])
+        # Create a list of supports for the plot
+        plotsupp=[suplist[0]]
         upindx+=1
         for i in range(len(RVar.support)):
             if i>lwindx and i<upindx:
-                plot_sup.append(RVar.support[i])
-        plot_sup.append(suplist[1])
-        print plot_sup
+                plotsupp.append(RVar.support[i])
+        plotsupp.append(suplist[1])
+        print plotsupp
+        # Parse the functions for matplotlib
+        plot_func=[]
+        for i in range(len(plotfunc)):
+            strfunc=str(plotfunc[i])
+            plot_func.append(strfunc)
+        print plot_func
+        # Display the plot
         if opt!='display':
             plt.ion()
-        plt.mat_plot(plot_func,plot_sup,lab1,lab2,'continuous')
-        #if opt!='display':
-            #plt.show()
+        plt.mat_plot(plot_func,plotsupp,lab1,lab2,'continuous')
     if RVar.ftype[0]=='discrete':
         if opt!='display':
             plt.ion()
-        plt.mat_plot(RVar.func,RVar.support,lab1,lab2,'discrete')
-        #if opt!='display':
-            #plt.show()    
+        plt.mat_plot(RVar.func,RVar.support,lab1,lab2,'discrete') 
 
 def PlotDisplay(plot_list,suplist=None):
     plt.ion()
     # Create a plot of each random variable in the plot list
     for i in range(len(plot_list)):
         PlotDist(plot_list[i],suplist,'display')
-    #plt.show()
-
-def PlotDist2(RVar):
-    plt.ion()
-    funclist=['exp','log','sqrt']
-    for i in range(len(RVar.func)):
-        if RVar.support[i]==-oo:
-            support1=RVar.variate(s=.01)[0]
-        else:
-            support1=RVar.support[i]
-        if RVar.support[i+1]==oo:
-            support2=RVar.variate(s=.99)[0]
-        else:
-            support2=RVar.support[i+1]
-        x=plt.arange(support1,support2,.01)
-        str_func=str(RVar.func[i])
-        for i in range(len(funclist)):
-            if funclist[i] in str_func:
-                str_func=str_func.replace(funclist[i],
-                                          'plt.'+funclist[i])
-        
-        s=eval(str_func)
-        plt.plot(x,s,color='blue')
         
     

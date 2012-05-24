@@ -9,6 +9,7 @@ Plotting Module
 Defines procedures for plotting random variables
 
 """
+from __future__ import division
 from sympy import *
 from applpy import *
 
@@ -18,7 +19,7 @@ except:
     print 'WARNING: Plotting not currently enabled'
     print 'Download matplotlib to enable plotting.'
     print ''
-
+    
 def mat_plot(funclist,suplist,lab1=None,lab2=None,ftype='continuous'):
     """
     Procedure Name: mat_plot
