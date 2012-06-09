@@ -2134,7 +2134,7 @@ def Product(RVar1,RVar2):
     # If the random variable is continuous, find and return the
     #   product of the two random variables
     if RVar1.ftype[0]=='continuous':
-        v=Symbol('v')
+        v=Symbol('v',positive=True)
         # Place zero in the support of X if it is not there already
         X1=PDF(RVar1)
         xfunc=[]
@@ -2192,13 +2192,13 @@ def Product(RVar1,RVar2):
                     else:
                         gj=Y_dummy.func[j]
                     fi=X_dummy.func[i]
-                    pv=integrate(fi*gj*(1/x),(x,a,b))
+                    pv=simplify(integrate(fi*gj*(1/x),(x,a,b)))
                     if d<oo:
-                        qv=integrate(fi*gj*(1/x),(x,v/d,b))
+                        qv=simplify(integrate(fi*gj*(1/x),(x,v/d,b)))
                     if c>0:
-                        rv=integrate(fi*gj*(1/x),(x,a,v/c))
+                        rv=simplify(integrate(fi*gj*(1/x),(x,a,v/c)))
                     if c>0 and d<oo and a*d<b*c:
-                        sv=integrate(fi*gj*(1/x),(x,v/d,v/c))
+                        sv=simplify(integrate(fi*gj*(1/x),(x,v/d,v/c)))
                     # 1st Qd, Scenario 1
                     if c==0 and d==oo:
                         for k in range(len(vfunc)):
@@ -2253,13 +2253,13 @@ def Product(RVar1,RVar2):
                     else:
                         gj=Y_dummy.func[j]
                     fi=X_dummy.func[i]
-                    pv=-integrate(fi*gj*(1/x),(x,a,b))
+                    pv=-simplify(integrate(fi*gj*(1/x),(x,a,b)))
                     if d<0:
-                        qv=-integrate(fi*gj*(1/x),(x,(v/d),b))
+                        qv=-simplify(integrate(fi*gj*(1/x),(x,(v/d),b)))
                     if c>-oo:
-                        rv=-integrate(fi*gj*(1/x),(x,a,(v/c)))
+                        rv=-simplify(integrate(fi*gj*(1/x),(x,a,(v/c))))
                     if c>-oo and d<0:
-                        sv=-integrate(fi*gj*(1/x),(x,(v/d),(v/c)))
+                        sv=-simplify(integrate(fi*gj*(1/x),(x,(v/d),(v/c))))
                     # 2nd Qd, Scenario 1
                     if c==-oo and d==0:
                         for k in range(len(vfunc)):
@@ -2314,13 +2314,13 @@ def Product(RVar1,RVar2):
                     else:
                         gj=Y_dummy.func[j]
                     fi=X_dummy.func[i]
-                    pv=-integrate(fi*gj*(1/x),(x,a,b))
+                    pv=-simplify(integrate(fi*gj*(1/x),(x,a,b)))
                     if d<oo:
-                        qv=-integrate(fi*gj*(1/x),(x,a,(v/d)))
+                        qv=-simplify(integrate(fi*gj*(1/x),(x,a,(v/d))))
                     if c>0:
-                        rv=-integrate(fi*gj*(1/x),(x,(v/c),b))
+                        rv=-simplify(integrate(fi*gj*(1/x),(x,(v/c),b)))
                     if c>0 and d<oo:
-                        sv=-integrate(fi*gj*(1/x),(x,(v/c),(v/d)))
+                        sv=-simplify(integrate(fi*gj*(1/x),(x,(v/c),(v/d))))
                     # 3rd Qd, Scenario 1
                     if c==0 and d==oo:
                         for k in range(len(vfunc)):
@@ -2375,13 +2375,13 @@ def Product(RVar1,RVar2):
                     else:
                         gj=Y_dummy.func[j]
                     fi=X_dummy.func[i]
-                    pv=integrate(fi*gj*(1/x),(x,a,b))
+                    pv=simplify(integrate(fi*gj*(1/x),(x,a,b)))
                     if d<0:
-                        qv=integrate(fi*gj*(1/x),(x,a,(v/d)))
+                        qv=simplify(integrate(fi*gj*(1/x),(x,a,(v/d))))
                     if c>-oo:
-                        rv=integrate(fi*gj*(1/x),(x,(v/c),b))
+                        rv=simplify(integrate(fi*gj*(1/x),(x,(v/c),b)))
                     if c>-oo and d<0:
-                        sv=integrate(fi*gj*(1/x),(x,(v/c),(v/d)))
+                        sv=simplify(integrate(fi*gj*(1/x),(x,(v/c),(v/d))))
                     # 4th Qd, Scenario 1
                     if c==oo and d==0:
                         for k in range(len(vfunc)):

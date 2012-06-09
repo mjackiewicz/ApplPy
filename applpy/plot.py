@@ -31,9 +31,16 @@ def mat_plot(funclist,suplist,lab1=None,lab2=None,ftype='continuous'):
     # if the random variable is continuous, plot the function
     if ftype=='continuous':
         for i in range(len(funclist)):
-            x=arange(suplist[i],suplist[i+1],0.01)
-            s=eval(funclist[i])
-            plot(x,s,linewidth=1.0,color='green')
+            if funclist[i]=='0':
+                continue
+            if 'x' in funclist[i]:
+                x=arange(suplist[i],suplist[i+1],0.01)
+                s=eval(funclist[i])
+                plot(x,s,linewidth=1.0,color='green')
+            else:
+                plot([suplist[i],suplist[i+1]],
+                     [funclist[i],funclist[i]],
+                      linewidth=1.0,color='green')
         if lab1=='idf':
             xlabel('s')
         else:
